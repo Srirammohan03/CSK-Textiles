@@ -1,3 +1,10 @@
+import productSuit1 from '@/assets/product-suit-1.jpg';
+import productSuit2 from '@/assets/product-suit-2.jpg';
+import productShirt1 from '@/assets/product-shirt-1.jpg';
+import productShirt2 from '@/assets/product-shirt-2.jpg';
+import productWedding1 from '@/assets/product-wedding-1.jpg';
+import productWedding2 from '@/assets/product-wedding-2.jpg';
+
 export interface Product {
   id: string;
   name: string;
@@ -17,7 +24,7 @@ export const products: Product[] = [
     name: 'Premium Italian Wool',
     category: 'suiting',
     price: 8500,
-    image: '/placeholder.svg',
+    image: productSuit1,
     isNew: true,
     description: 'Luxurious 100% wool suiting fabric from Italy',
     fabric: '100% Wool',
@@ -28,7 +35,7 @@ export const products: Product[] = [
     name: 'Classic Charcoal Blend',
     category: 'suiting',
     price: 6200,
-    image: '/placeholder.svg',
+    image: productSuit2,
     isNew: true,
     description: 'Versatile wool-poly blend for executive wear',
     fabric: '70% Wool 30% Polyester',
@@ -61,7 +68,7 @@ export const products: Product[] = [
     name: 'Egyptian Cotton White',
     category: 'shirting',
     price: 2200,
-    image: '/placeholder.svg',
+    image: productShirt1,
     isNew: true,
     description: 'Pure Egyptian cotton for crisp formal shirts',
     fabric: '100% Egyptian Cotton',
@@ -72,7 +79,7 @@ export const products: Product[] = [
     name: 'Oxford Blue',
     category: 'shirting',
     price: 1800,
-    image: '/placeholder.svg',
+    image: productShirt2,
     isNew: true,
     description: 'Classic oxford weave in sky blue',
     fabric: '100% Cotton Oxford',
@@ -105,7 +112,7 @@ export const products: Product[] = [
     name: 'Golden Brocade',
     category: 'wedding-sherwani',
     price: 15000,
-    image: '/placeholder.svg',
+    image: productWedding1,
     isNew: true,
     description: 'Luxurious gold brocade for wedding sherwani',
     fabric: 'Silk Brocade',
@@ -116,7 +123,7 @@ export const products: Product[] = [
     name: 'Ivory Silk Sherwani',
     category: 'wedding-sherwani',
     price: 12500,
-    image: '/placeholder.svg',
+    image: productWedding1,
     isNew: true,
     description: 'Pure silk fabric with subtle embroidery',
     fabric: '100% Silk',
@@ -127,7 +134,7 @@ export const products: Product[] = [
     name: 'Maroon Velvet Groomwear',
     category: 'wedding-sherwani',
     price: 18000,
-    image: '/placeholder.svg',
+    image: productWedding2,
     description: 'Rich velvet fabric for royal look',
     fabric: 'Silk Velvet',
     colors: ['Maroon', 'Wine']
@@ -137,7 +144,7 @@ export const products: Product[] = [
     name: 'Champagne Embroidered',
     category: 'wedding-sherwani',
     price: 16500,
-    image: '/placeholder.svg',
+    image: productWedding1,
     description: 'Elegant champagne with gold thread work',
     fabric: 'Silk Blend',
     colors: ['Champagne', 'Gold']
