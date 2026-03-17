@@ -10,24 +10,18 @@ gsap.registerPlugin(ScrollTrigger);
 const AboutPreview = () => {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
-  const textContent = "Heritage of Excellence in Rikabgunj";
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const words = headingRef.current.querySelectorAll(".word");
-
-      gsap.from(words, {
-        y: 40,
+      gsap.from(headingRef.current, {
+        y: 30,
         opacity: 0,
-        rotateX: -45,
-        scale: 0.9,
-        duration: 0.8,
-        stagger: 0.1,
-        ease: "back.out(1.7)",
+        duration: 1,
+        ease: "power3.out",
         scrollTrigger: {
           trigger: headingRef.current,
           start: "top 90%",
-          toggleActions: "play none none reverse",
+          toggleActions: "play reverse play reverse",
         },
       });
     }, sectionRef);
@@ -52,15 +46,9 @@ const AboutPreview = () => {
           <div className="order-1 md:order-2">
             <h2
               ref={headingRef}
-              className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6 flex flex-wrap gap-x-[0.3em]"
+              className="text-4xl md:text-5xl font-display text-foreground mb-6 flex flex-wrap gap-x-[0.3em]"
             >
-              {textContent.split(" ").map((word, i) => (
-                <span key={i} className="inline-block overflow-hidden pb-1">
-                  <span className="word inline-block origin-bottom-left">
-                    {word}
-                  </span>
-                </span>
-              ))}
+              Heritage of Excellence in Rikabgunj
             </h2>
             <p className="text-muted-foreground text-lg mb-4">
               Since 1998, CSK Textiles has been synonymous with premium men's

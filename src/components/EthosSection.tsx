@@ -50,7 +50,7 @@ const EthosSection: React.FC = () => {
               WHERE DESIGN
             </span>
 
-            <span ref={line2Ref} className="block">
+            <span ref={line2Ref} className="block text-yellow-400">
               MEETS INNOVATION
             </span>
           </h2>

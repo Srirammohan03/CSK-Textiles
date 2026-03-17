@@ -61,7 +61,7 @@ const WhyChooseSection = () => {
         <div className="text-center mb-16">
           <h2
             ref={titleRef}
-            className="text-3xl md:text-5xl font-display font-bold text-foreground mb-4"
+            className="text-3xl md:text-5xl font-display text-foreground mb-4"
           >
             Why Choose CSK Textiles
           </h2>

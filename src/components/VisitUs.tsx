@@ -8,7 +8,7 @@ const VisitUs = () => {
     >
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-display font-bold mb-4 text-foreground">
+          <h2 className="text-4xl sm:text-5xl font-display mb-4 text-foreground">
             Visit Us
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

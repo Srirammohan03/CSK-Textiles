@@ -42,15 +42,16 @@ const Header = () => {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center">
-            <h1 className="text-xl md:text-2xl font-display font-bold text-primary">
-              CSK Textiles{" "}
-              <span
-                className={`${isScrolled ? "text-foreground" : "text-foreground/80"} font-normal transition-colors`}
-              >
-                Hyderabad
-              </span>
-            </h1>
+          <Link
+            to="/"
+            className="transition-transform duration-300 hover:scale-95"
+          >
+            <img
+              src="/images/logo.png"
+              className={`object-contain transition-all duration-300 ${
+                isScrolled ? "h-28" : "h-36"
+              }`}
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -60,10 +61,12 @@ const Header = () => {
                 to={link.path}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
                   isActive(link.path)
-                    ? "text-primary"
+                    ? isScrolled
+                      ? "text-primary"
+                      : "text-yellow-300"
                     : isScrolled
                       ? "text-foreground"
-                      : "text-foreground/90"
+                      : "text-white"
                 }`}
               >
                 {link.name}
