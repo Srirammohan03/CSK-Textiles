@@ -14,27 +14,45 @@ import Footer from "@/components/Footer";
 import { categories } from "@/data/categories";
 import { getNewArrivals } from "@/data/products";
 import { testimonials } from "@/data/testimonials";
+import EthosSection from "@/components/EthosSection";
+import VisitUs from "@/components/VisitUs";
+import { useScroll } from "framer-motion";
+import { useRef } from "react";
 
 const Index = () => {
-  const featuredCategories = categories.filter(c => c.featured);
+  const featuredCategories = categories.filter((c) => c.featured);
   const newArrivals = getNewArrivals();
+  const chooseRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: chooseRef,
+    offset: ["start start", "end end"],
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AnnouncementBar />
+      {/* <AnnouncementBar /> */}
       <Header />
       <main>
-        <HeroSection />
+        <div className="relative md:h-[200dvh] z-30">
+          <HeroSection />
+          <EthosSection />
+        </div>
         <CategoryGrid categories={featuredCategories} />
-        <ProductCarousel products={newArrivals} />
+        {/* <ProductCarousel products={newArrivals} /> */}
         <ServicesGrid />
-        <WhyChooseSection />
-        <AboutPreview />
-        <InstagramReels />
         <TestimonialsSection testimonials={testimonials} />
-        <CTABanner />
+        <div ref={chooseRef} className="md:h-[200vh]">
+          <WhyChooseSection />
+          <AboutPreview />
+        </div>
+        {/* <InstagramReels /> */}
+        <VisitUs />
+        <div className="md:h-[160vh] relative z-30">
+          <CTABanner />
+          <Footer />
+        </div>
       </main>
-      <Footer />
     </div>
   );
 };

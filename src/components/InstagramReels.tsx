@@ -7,23 +7,23 @@ const InstagramReels = () => {
     {
       id: 1,
       thumbnail: "/placeholder.svg",
-      title: "Premium Suiting Collection"
+      title: "Premium Suiting Collection",
     },
     {
       id: 2,
       thumbnail: "/placeholder.svg",
-      title: "Wedding Sherwani Fabrics"
+      title: "Wedding Sherwani Fabrics",
     },
     {
       id: 3,
       thumbnail: "/placeholder.svg",
-      title: "Executive Shirting"
+      title: "Executive Shirting",
     },
     {
       id: 4,
       thumbnail: "/placeholder.svg",
-      title: "Behind The Scenes"
-    }
+      title: "Behind The Scenes",
+    },
   ];
 
   return (
@@ -32,16 +32,16 @@ const InstagramReels = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center gap-2 mb-4">
             <Instagram className="h-8 w-8 text-primary" />
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
+            <h2 className="text-3xl md:text-4xl font-display text-foreground">
               Follow Us on Instagram
             </h2>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
             See our latest fabrics, styling tips, and customer stories
           </p>
-          <a 
-            href="https://www.instagram.com/csktextiles" 
-            target="_blank" 
+          <a
+            href="https://www.instagram.com/csktextiles"
+            target="_blank"
             rel="noopener noreferrer"
           >
             <Button variant="outline" className="gap-2">

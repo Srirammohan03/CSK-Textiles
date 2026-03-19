@@ -1,38 +1,139 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { motion, Variants } from "framer-motion";
+import { Award, Users, Scissors, Briefcase } from "lucide-react";
+
+const featuresLeft = [
+  {
+    icon: Award,
+    title: "Since 1998",
+    description:
+      "25+ years of textile expertise in Hyderabad's premium fabric market",
+  },
+  {
+    icon: Users,
+    title: "Groomwear Experts",
+    description: "Specialized in wedding sherwani and formal occasion fabrics",
+  },
+];
+
+const featuresRight = [
+  {
+    icon: Scissors,
+    title: "Custom Tailoring",
+    description: "Expert guidance for bespoke suits and traditional groomwear",
+  },
+  {
+    icon: Briefcase,
+    title: "Executive Fabrics",
+    description: "Premium suiting for professionals who value quality",
+  },
+];
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  show: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      delay: i * 0.2,
+      ease: "easeOut",
+    },
+  }),
+};
 
 const AboutPreview = () => {
   return (
-    <section className="py-16 md:py-20">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1">
-            <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+    <section className="py-16 md:py-20 bg-white relative z-10">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* TITLE */}
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <motion.h2
+            variants={fadeUp}
+            custom={0}
+            className="text-3xl md:text-5xl font-display font-semibold"
+          >
+            Why Choose CSK Textiles
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            custom={1}
+            className="text-muted-foreground mt-4 max-w-xl mx-auto"
+          >
+            Trusted by Hyderabad's discerning men for over two decades
+          </motion.p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-3 gap-12 items-center">
+          {/* LEFT */}
+          <div className="space-y-12">
+            {featuresLeft.map((item, index) => (
+              <motion.div
+                key={index}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                custom={index}
+              >
+                <h3 className="text-3xl font-semibold mb-2">{item.title}</h3>
+
+                <p className="text-xl text-muted-foreground mb-4">
+                  {item.description}
+                </p>
+
+                {index !== featuresLeft.length - 1 && (
+                  <div className="border-b border-border/40" />
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* IMAGE */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            custom={1}
+            className="flex justify-center"
+          >
+            <div className="w-full max-w-md aspect-[4/4.5] overflow-hidden shadow-xl">
               <img
-                src="/placeholder.svg"
-                alt="CSK Textiles Store"
+                src="/images/aboutPreview.jpg"
+                alt="CSK Textiles"
                 className="w-full h-full object-cover"
               />
             </div>
-          </div>
-          
-          <div className="order-1 md:order-2">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-6">
-              Heritage of Excellence in Rikabgunj
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Since 1998, CSK Textiles has been synonymous with premium men's fabrics in Hyderabad's historic Rikabgunj market. What started as a vision by Chimanlal Suresh Kumar has grown into a trusted destination for executives and grooms seeking exceptional quality.
-            </p>
-            <p className="text-muted-foreground mb-6">
-              Our expertise spans premium suiting for corporate professionals, fine shirting for daily elegance, and luxurious wedding fabrics for the most important day of your life. Every fabric tells a story of craftsmanship and tradition.
-            </p>
-            <Link to="/about">
-              <Button variant="outline" className="group">
-                Our Complete Story
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
+          </motion.div>
+
+          {/* RIGHT */}
+          <div className="space-y-12">
+            {featuresRight.map((item, index) => (
+              <motion.div
+                key={index}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                custom={index}
+              >
+                <h3 className="text-3xl font-semibold mb-2">{item.title}</h3>
+
+                <p className="text-xl text-muted-foreground mb-4">
+                  {item.description}
+                </p>
+
+                {index !== featuresRight.length - 1 && (
+                  <div className="border-b border-border/40" />
+                )}
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
