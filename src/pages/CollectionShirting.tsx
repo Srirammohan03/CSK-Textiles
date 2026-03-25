@@ -95,17 +95,17 @@ const CollectionShirting = () => {
                   Men's Premium Shirting
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <Link to="/customize">
-                  <Button className="rounded-full px-10 h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-sm font-bold">
+              <div className="flex w-full lg:w-auto flex-row items-center gap-3 lg:gap-4 justify-center mt-6 lg:mt-0">
+                <Link to="/customize" className="flex-1 border-none focus:outline-none">
+                  <Button className="w-full rounded-full px-2 lg:px-10 h-12 lg:h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-[11px] sm:text-xs lg:text-sm font-bold">
                     Customize{" "}
-                    <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight className="ml-1 lg:ml-2 w-3 sm:w-4 h-3 sm:h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Link to="/gallery">
-                  <Button className="rounded-full px-10 h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-sm font-bold">
+                <Link to="/gallery" className="flex-1 border-none focus:outline-none">
+                  <Button className="w-full rounded-full px-2 lg:px-10 h-12 lg:h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-[11px] sm:text-xs lg:text-sm font-bold">
                     View Gallery{" "}
-                    <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight className="ml-1 lg:ml-2 w-3 sm:w-4 h-3 sm:h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
               </div>
