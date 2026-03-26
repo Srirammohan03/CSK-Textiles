@@ -6,7 +6,7 @@ import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import bgHeroHome from "@/assets/gallery/L7P00244.jpg";
 gsap.registerPlugin(ScrollTrigger);
 // gsap.registerPlugin(SplitText);
 
@@ -65,7 +65,7 @@ const HeroSection = () => {
         ref={bgRef}
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url("src/assets/gallery/L7P00244.jpg")`,
+          backgroundImage: `linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url(${bgHeroHome})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
