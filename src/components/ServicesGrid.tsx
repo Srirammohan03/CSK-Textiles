@@ -117,9 +117,12 @@ const ServicesGrid = () => {
       <section className="py-16 px-6 bg-background">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-display font-bold mb-3">Our Services</h2>
+            <h2 className="text-3xl font-display font-bold mb-3">
+              Our Services
+            </h2>
             <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-              From bespoke tailoring to expert consultations, we provide a complete textile experience.
+              From bespoke tailoring to expert consultations, we provide a
+              complete textile experience.
             </p>
           </div>
 
@@ -160,7 +163,7 @@ const ServicesGrid = () => {
       <div
         ref={bgRef}
         className="absolute inset-0 z-0 bg-cover bg-center origin-center"
-        style={{ backgroundImage: 'url("/images/services.jpeg")' }}
+        style={{ backgroundImage: 'url("/images/services.png")' }}
       />
 
       <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">

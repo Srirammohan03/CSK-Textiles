@@ -220,6 +220,26 @@ const ProductDetails = () => {
                   </p>
                   <p className="font-medium">10 - 14 Business Days</p>
                 </div>
+                <div>
+                  {" "}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const outfitType =
+                        product.category === "suiting"
+                          ? "Suit"
+                          : product.category === "shirting"
+                            ? "Shirt"
+                            : "Wedding outfit";
+                      navigate("/customize", { state: { outfit: outfitType } });
+                    }}
+                    className="w-full h-12 rounded-xl border-black text-black font-medium shadow-lg transition-transform hover:scale-[1.02]"
+                  >
+                    Customize Design
+                  </Button>
+                </div>
               </div>
 
               <div className="prose prose-sm text-muted-foreground mb-12">
@@ -249,7 +269,7 @@ const ProductDetails = () => {
                       </Label>
                       <Input
                         id="name"
-                        placeholder="John Doe"
+                        placeholder="Your Name"
                         className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                         required
                       />
@@ -264,7 +284,7 @@ const ProductDetails = () => {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="john@example.com"
+                        placeholder="Your Email"
                         className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                         required
                       />
@@ -284,12 +304,14 @@ const ProductDetails = () => {
                       required
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white font-medium shadow-lg transition-transform hover:scale-[1.02]"
-                  >
-                    Book Design Consultation
-                  </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Button
+                      type="submit"
+                      className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white font-medium shadow-lg transition-transform hover:scale-[1.02]"
+                    >
+                      Book Consultation
+                    </Button>
+                  </div>
                 </form>
               </div>
 

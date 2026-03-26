@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { getProductsByCategory } from "@/data/products";
-import weddingHero from "@/assets/wedding-sherwani.jpg";
+import weddingHero from "/images/wedding-banner.png";
 import { ChevronRight, Filter, ShoppingBag } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -50,11 +50,11 @@ const CollectionWedding = () => {
       <Header />
 
       <main className="flex-grow">
-        <section className="relative h-[80vh] overflow-hidden">
+        <section className="relative py-28 md:py-40 overflow-hidden">
           <motion.div
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
             className="absolute inset-0"
           >
             <img
@@ -62,7 +62,7 @@ const CollectionWedding = () => {
               alt="Premium Wedding Collection"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute inset-0 bg-black/20" />
           </motion.div>
 
           <div className="relative h-full container mx-auto px-4 flex flex-col justify-center items-center text-center">
@@ -71,13 +71,13 @@ const CollectionWedding = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.8 }}
             >
-              <span className="inline-block px-4 py-1 border border-white/20 rounded-full text-[10px] font-medium tracking-[0.3em] uppercase mb-4 backdrop-blur-md">
+              <span className="inline-block px-4 py-1 border border-white/20 rounded-full text-[10px] font-medium tracking-[0.3em] uppercase  backdrop-blur-md">
                 Royal Ceremonial
               </span>
-              <h1 className="text-6xl md:text-8xl font-display font-medium mb-6 tracking-tight">
+              <h1 className="text-2xl md:text-5xl font-display font-medium tracking-tight my-4">
                 Grand <span className="italic font-light">Traditions</span>
               </h1>
-              <p className="max-w-xl mx-auto text-lg text-white/60 font-light leading-relaxed mb-8">
+              <p className="max-w-xl mx-auto text-lg text-white/60 font-light leading-relaxed">
                 Your legacy begins here. Discover our prestigious collection of
                 ceremonial and wedding fabrics.
               </p>
@@ -99,6 +99,7 @@ const CollectionWedding = () => {
               <div className="flex w-full lg:w-auto flex-row items-center gap-3 lg:gap-4 justify-center mt-6 lg:mt-0">
                 <Link
                   to="/customize"
+                  state={{ outfit: "Wedding outfit" }}
                   className="flex-1 border-none focus:outline-none"
                 >
                   <Button className="w-full rounded-full px-2 lg:px-10 h-12 lg:h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-[11px] sm:text-xs lg:text-sm font-bold">

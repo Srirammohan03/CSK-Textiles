@@ -46,7 +46,7 @@ const WhyChooseSection = () => {
         <div
           data-aos="fade-up"
           data-aos-delay="400"
-          className="md:absolute md:right-10 md:bottom-40 max-w-md text-center md:text-left text-neutral-200 text-sm md:text-base leading-relaxed bg-black/20 md:bg-transparent p-6 md:p-0 rounded-lg backdrop-blur-sm md:backdrop-blur-none"
+          className="md:absolute md:right-10 md:bottom-48 max-w-md text-center md:text-left text-neutral-200 text-sm md:text-base leading-relaxed bg-black/20 md:bg-transparent p-6 md:p-0 rounded-lg backdrop-blur-sm md:backdrop-blur-none"
         >
           At CSK Textiles, fabric is not just material — it is identity. Our
           premium suiting, sherwani, and traditional fabrics are crafted for

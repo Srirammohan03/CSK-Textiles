@@ -5,6 +5,12 @@ import categoryWedding from "/images/wedding-dress.png";
 import categoryTuxedo from "/images/ethos.jpg";
 import categoryIndoWestern from "@/assets/suities/Men/5851.jpg";
 import categoryBlazers from "/images/hl4.jpg";
+import categoryJodhpuri from "/images/jodhpuri.jpg";
+import categoryDCollection from "/images/designer-collections.jpg";
+import categoryEthnic from "/images/ethnic.jpg";
+import categoryPartyWear from "/images/party-wear.jpg";
+import categoryVelvet from "/images/designer-collection.jpg";
+import categoryLinen from "/images/linen-wear.jpg";
 export const categories = [
   {
     id: "suiting",
@@ -61,7 +67,7 @@ export const categories = [
     id: "linen-wear",
     name: "Linen Wear",
     description: "Lightweight breathable linen fabrics",
-    image: categoryShirting,
+    image: categoryLinen,
     link: "/collections/shirting",
     featured: true,
   },
@@ -69,7 +75,7 @@ export const categories = [
     id: "velvet",
     name: "Velvet",
     description: "Luxury velvet fabrics for occasions",
-    image: categoryWedding,
+    image: categoryVelvet,
     link: "/collections/wedding",
     featured: true,
   },
@@ -93,7 +99,7 @@ export const categories = [
     id: "jodhpuri",
     name: "Jodhpuri",
     description: "Elegant prince coat styles",
-    image: categoryIndoWestern,
+    image: categoryJodhpuri,
     link: "/collections/wedding",
     featured: true,
   },
@@ -117,7 +123,7 @@ export const categories = [
     id: "ethnic-fabrics",
     name: "Ethnic Fabrics",
     description: "Rich Indian traditional materials",
-    image: categoryWedding,
+    image: categoryEthnic,
     link: "/collections/wedding",
     featured: true,
   },
@@ -125,7 +131,7 @@ export const categories = [
     id: "party-wear",
     name: "Party Wear",
     description: "Stylish fabrics for celebrations",
-    image: categoryTuxedo,
+    image: categoryPartyWear,
     link: "/collections/suiting",
     featured: true,
   },
@@ -133,7 +139,7 @@ export const categories = [
     id: "designer-collection",
     name: "Designer Collection",
     description: "Premium designer fabrics",
-    image: categoryIndoWestern,
+    image: categoryDCollection,
     link: "/collections/suiting",
     featured: true,
   },

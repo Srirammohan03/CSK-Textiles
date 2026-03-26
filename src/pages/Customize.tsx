@@ -24,11 +24,14 @@ import {
   type OutfitType,
   type ViewType,
 } from "@/data/CustomizeMaterials";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import suitingBanner from "@/assets/suiting.jpg";
 
 const Customize = () => {
-  const [selectedOutfit, setSelectedOutfit] = useState<OutfitType>("Suit");
+  const location = useLocation();
+  const passedOutfit = location.state?.outfit as OutfitType | undefined;
+  
+  const [selectedOutfit, setSelectedOutfit] = useState<OutfitType>(passedOutfit || "Suit");
   const [selectedMaterialId, setSelectedMaterialId] =
     useState("suit-navy-stripe");
   const [selectedColor, setSelectedColor] = useState("#1F2A44");

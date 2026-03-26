@@ -65,7 +65,7 @@ const HeroSection = () => {
         ref={bgRef}
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url("/images/banner.jpg")`,
+          backgroundImage: `linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url("src/assets/gallery/L7P00244.jpg")`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
