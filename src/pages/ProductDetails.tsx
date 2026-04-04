@@ -16,11 +16,13 @@ import {
   Truck,
   Mail,
   MessageSquare,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const ProductDetails = () => {
+  const [loading, setLoading] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const product = products.find((p) => p.id === id);
@@ -43,11 +45,36 @@ const ProductDetails = () => {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const GOOGLE_SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast.success(
-      "Inquiry sent successfully! Our stylist will contact you soon.",
-    );
+
+    if (loading) return;
+
+    setLoading(true);
+
+    const form = e.currentTarget;
+
+    const formData = new FormData(form);
+
+    formData.append("product", product?.name || "");
+    formData.append("type", "product");
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      toast.success("Inquiry sent successfully!");
+      form.reset();
+    } catch (error) {
+      console.error(error);
+      toast.error("Submission failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -269,9 +296,28 @@ const ProductDetails = () => {
                       </Label>
                       <Input
                         id="name"
+                        name="name"
                         placeholder="Your Name"
-                        className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                         required
+                        className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="phone"
+                        className="text-[10px] uppercase tracking-widest ml-1"
+                      >
+                        Mobile Number
+                      </Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="Enter mobile number"
+                        required
+                        minLength={10}
+                        maxLength={10}
+                        className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                       />
                     </div>
                     <div className="space-y-2">
@@ -282,11 +328,12 @@ const ProductDetails = () => {
                         Contact Email
                       </Label>
                       <Input
-                        id="email"
-                        type="email"
-                        placeholder="Your Email"
                         className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                         required
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="Your Email"
                       />
                     </div>
                   </div>
@@ -299,19 +346,26 @@ const ProductDetails = () => {
                     </Label>
                     <Textarea
                       id="message"
-                      placeholder="I am interested in a 3-piece suit with peak lapels..."
+                      placeholder="I am interested in a ..."
                       className="bg-white border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm min-h-[100px]"
                       required
+                      name="message"
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button
-                      type="submit"
-                      className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white font-medium shadow-lg transition-transform hover:scale-[1.02]"
-                    >
-                      Book Consultation
-                    </Button>
-                  </div>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white font-medium shadow-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Book Consultation"
+                    )}
+                  </Button>
                 </form>
               </div>
 

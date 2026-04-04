@@ -23,7 +23,13 @@ import productMenSuit4_2 from '/textures/suits/cws3.jpg';
 import productMenSuit4_3 from '/textures/suits/suit-04-2.jpg';
 
 
-
+//  "Wool",
+//     "Silk",
+//     "Linen",
+//     "Cotton",
+//     "Plain",
+//     "Striped",
+//     "Textured",
 
 export const suitingProducts: Product[] = [
   {
@@ -34,7 +40,7 @@ export const suitingProducts: Product[] = [
     image: [productMenSuit1, productMenSuit1_1, productMenSuit1_2, productMenSuit1_3, productMenSuit1_4],
     isNew: true,
     description: 'Elegant charcoal suit styled for weddings and formal occasions',
-    fabric: 'Premium Wool Blend',
+    fabric: 'Plain' + 'Silk' + 'Linen',
     colors: ['Charcoal'],
     tags: ['Wedding', 'Formal'],
     style: '3-piece'
@@ -47,7 +53,7 @@ export const suitingProducts: Product[] = [
     image: [productMenSuit2, productMenSuit2_1, productMenSuit2_2, productMenSuit2_3, productMenSuit2_4, productMenSuit2_5],
     isNew: true,
     description: 'Premium black and silver contrast suit designed for luxury weddings and receptions',
-    fabric: 'Super 120s Wool Blend with Satin Lapel',
+    fabric: 'Plain' + 'Cotton' + 'Textured',
     colors: ['Black', 'Silver Grey'],
     tags: ['Wedding', 'Luxury', 'Reception'],
     style: '3-piece'
@@ -60,7 +66,7 @@ export const suitingProducts: Product[] = [
     image: [productMenSuit3, productMenSuit3_1, productMenSuit3_2, productMenSuit3_3],
     isNew: true,
     description: 'Classic navy suit designed for business and formal occasions',
-    fabric: 'Super 100s Wool Blend',
+    fabric: 'Plain' + 'Linen' + 'Textured',
     colors: ['Navy Blue'],
     tags: ['Formal', 'Business'],
     style: '2-piece'
@@ -72,7 +78,7 @@ export const suitingProducts: Product[] = [
     price: 11500,
     image: [productMenSuit4, productMenSuit4_1, productMenSuit4_2, productMenSuit4_3],
     description: 'Elegant light grey suit ideal for business and formal occasions',
-    fabric: 'Super 110s Wool Blend',
+    fabric: 'Wool' + 'Striped',
     colors: ['Light Silver Grey'],
     tags: ['Formal', 'Office Wear'],
     style: '3-piece'

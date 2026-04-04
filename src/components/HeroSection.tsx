@@ -6,12 +6,12 @@ import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import bgHeroHome from "@/assets/gallery/L7P00244.jpg";
+import bgHeroHome from "/images/banner.mp4";
 gsap.registerPlugin(ScrollTrigger);
 // gsap.registerPlugin(SplitText);
 
 const HeroSection = () => {
-  const bgRef = useRef<HTMLDivElement>(null);
+  const bgRef = useRef<HTMLVideoElement>(null);
   const line1Ref = useRef<HTMLSpanElement>(null);
   const line2Ref = useRef<HTMLSpanElement>(null);
   const pRef = useRef<HTMLParagraphElement>(null);
@@ -61,14 +61,14 @@ const HeroSection = () => {
   return (
     <section className="sticky top-0 md:h-screen h-[80dvh] flex items-center justify-center overflow-hidden">
       {/* Background */}
-      <div
+      <video
         ref={bgRef}
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url(${bgHeroHome})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        src={bgHeroHome}
+        autoPlay
+        loop
+        muted
+        playsInline
       />
 
       {/* CENTER TEXT */}

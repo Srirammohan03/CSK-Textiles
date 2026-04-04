@@ -10,6 +10,7 @@ import shirtingBanner from "/images/shirtingBanner.png";
 import { ChevronRight, Filter, ShoppingBag } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import { FilterDropdown } from "@/components/FilterDropdown";
 
 const CollectionShirting = () => {
   const allProducts = getProductsByCategory("shirting");
@@ -84,66 +85,40 @@ const CollectionShirting = () => {
           </div>
         </section>
 
-        <section className="py-4 border-b border-white/5 bg-[#0a0a0a] backdrop-blur-3xl">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row justify-between items-center gap-8 mb-10">
-              <div className="text-center lg:text-left">
-                <h2 className="text-3xl font-display font-medium">
-                  Fabric Gallery
-                </h2>
-                <p className="text-white/40 text-[10px] uppercase tracking-[0.4em] mt-2">
-                  Men's Premium Shirting
-                </p>
-              </div>
-              <div className="flex w-full lg:w-auto flex-row items-center gap-3 lg:gap-4 justify-center mt-6 lg:mt-0">
-                <Link
-                  to="/customize"
-                  state={{ outfit: "Shirt" }}
-                  className="flex-1 border-none focus:outline-none"
-                >
-                  <Button className="w-full rounded-full px-2 lg:px-10 h-12 lg:h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-[11px] sm:text-xs lg:text-sm font-bold">
-                    Customize{" "}
-                    <ChevronRight className="ml-1 lg:ml-2 w-3 sm:w-4 h-3 sm:h-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-                <Link
-                  to="/gallery"
-                  className="flex-1 border-none focus:outline-none"
-                >
-                  <Button className="w-full rounded-full px-2 lg:px-10 h-12 lg:h-14 bg-white text-black hover:bg-white/90 transition-all shadow-2xl group text-[11px] sm:text-xs lg:text-sm font-bold">
-                    View Gallery{" "}
-                    <ChevronRight className="ml-1 lg:ml-2 w-3 sm:w-4 h-3 sm:h-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-              </div>
+        <section className="relative z-50 py-8 md:py-12 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl md:flex justify-around">
+            {/* Top Row: Title & Action */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-5 md:mb-5">
+              <Link
+                to="/customize"
+                state={{ outfit: "Wedding outfit" }}
+                className="w-full sm:w-auto shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-full"
+              >
+                <Button className="w-full sm:w-auto rounded-full px-8 h-12 md:h-14 bg-white text-black hover:bg-gray-200 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] group text-xs md:text-sm font-bold tracking-wide">
+                  Customize
+                  <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                  <Filter className="w-3 h-3 text-white/60" />
+            {/* Bottom Row: Filters */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+              {/* Left */}
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <Filter className="w-4 h-4 text-white/70" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
+                <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-medium">
                   Refine Fabric
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 w-full md:w-auto">
-                {filters.map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setActiveFilter(filter)}
-                    className={cn(
-                      "px-6 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-500 border text-center",
-                      activeFilter === filter
-                        ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                        : "bg-white/5 text-white/40 border-white/5 hover:border-white/20 hover:text-white",
-                    )}
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
+              {/* Right */}
+              <FilterDropdown
+                filters={filters}
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+              />
             </div>
           </div>
         </section>

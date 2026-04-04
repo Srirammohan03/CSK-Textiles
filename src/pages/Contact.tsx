@@ -10,12 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, MessageCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const contactSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().min(10),
-  message: z.string().min(1),
-});
-
 const stores = [
   {
     name: "Rikab Gunj Showroom",
@@ -33,6 +27,8 @@ const stores = [
 
 export default function Contact() {
   const { toast } = useToast();
+  const GOOGLE_SCRIPT_URL_3 =
+    "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -43,32 +39,50 @@ export default function Contact() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
     setLoading(true);
 
     try {
       contactSchema.parse(formData);
       setErrors({});
 
-      const msg = `Hello CSK Textiles\n\nName: ${formData.name}\nPhone: ${formData.phone}\n\n${formData.message}`;
+      const payload = new FormData();
+      payload.append("name", formData.name);
+      payload.append("phone", formData.phone);
+      payload.append("message", formData.message);
+      payload.append("type", "contact"); // 🔥 required for routing
 
-      window.open(
-        `https://api.whatsapp.com/send?phone=919876543210&text=${encodeURIComponent(
-          msg,
-        )}`,
-      );
+      await fetch(GOOGLE_SCRIPT_URL_3, {
+        method: "POST",
+        body: payload,
+      });
+
+      toast({
+        title: "Success",
+        description: "Your enquiry has been submitted",
+      });
 
       setFormData({ name: "", phone: "", message: "" });
     } catch (err) {
       if (err instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
+
         err.issues.forEach((issue) => {
           if (issue.path[0]) {
             fieldErrors[issue.path[0].toString()] = issue.message;
           }
         });
+
         setErrors(fieldErrors);
+      } else {
+        console.error(err);
+        toast({
+          title: "Error",
+          description: "Submission failed",
+        });
       }
     } finally {
       setLoading(false);

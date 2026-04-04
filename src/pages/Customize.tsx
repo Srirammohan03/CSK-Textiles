@@ -12,6 +12,7 @@ import {
   Sparkles,
   Layers3,
   ArrowRightLeft,
+  Loader2,
 } from "lucide-react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import {
 } from "@/data/CustomizeMaterials";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import suitingBanner from "@/assets/suiting.jpg";
+import { toast } from "sonner";
 
 const Customize = () => {
   const location = useLocation();
@@ -39,6 +41,17 @@ const Customize = () => {
   const [selectedView, setSelectedView] = useState<ViewType>("front");
   const [zoom, setZoom] = useState(1);
   const [search, setSearch] = useState("");
+  const GOOGLE_SCRIPT_URL_2 =
+    "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const filteredMaterials = useMemo(() => {
     return customizeMaterials.filter((item) => {
@@ -70,7 +83,14 @@ const Customize = () => {
       setSelectedMaterialId(first.id);
     }
   }, [selectedOutfit]);
-
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
   const renderSwatchBackground = (item: MaterialItem) => {
     const base = item.defaultColor;
 
@@ -340,7 +360,39 @@ const Customize = () => {
     const nextIndex = (currentIndex + 1) % viewOptions.length;
     setSelectedView(viewOptions[nextIndex]);
   };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
+    if (loading) return;
+    setLoading(true);
+
+    const payload = new FormData();
+
+    payload.append("name", formData.name);
+    payload.append("email", formData.email);
+    payload.append("phone", formData.phone);
+    payload.append("message", formData.message);
+    payload.append("product", selectedMaterial?.name || "");
+    payload.append("outfit", selectedOutfit);
+
+    // 🔥 IMPORTANT (you missed this)
+    payload.append("type", "customize");
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL_2, {
+        method: "POST",
+        body: payload,
+      });
+
+      toast.success("Customization request sent!");
+      setFormData({ name: "", email: "", phone: "", message: "" });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to submit");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-white text-[#111827]">
       <Header />
@@ -576,15 +628,62 @@ const Customize = () => {
                 </div>
               </div>
 
-              <div className="mt-10 grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  className="h-12 rounded-xl border-[#D1D5DB] text-[#111827]"
-                  onClick={() => (window.location.href = "/contact")}
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Enquire
-                </Button>
+              <div className="mt-10">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Your Name"
+                    required
+                    className="w-full h-11 rounded-xl border border-[#D1D5DB] px-4 text-sm outline-none focus:border-black"
+                  />
+
+                  <input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email Address"
+                    required
+                    className="w-full h-11 rounded-xl border border-[#D1D5DB] px-4 text-sm outline-none focus:border-black"
+                  />
+
+                  <input
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Mobile Number"
+                    required
+                    maxLength={10}
+                    className="w-full h-11 rounded-xl border border-[#D1D5DB] px-4 text-sm outline-none focus:border-black"
+                  />
+
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Tell us your requirements..."
+                    required
+                    className="w-full rounded-xl border border-[#D1D5DB] px-4 py-3 text-sm outline-none focus:border-black min-h-[100px]"
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 rounded-xl bg-black text-white flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Submit Customization"
+                    )}
+                  </Button>
+                </form>
               </div>
             </div>
           </aside>

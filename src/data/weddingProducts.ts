@@ -25,7 +25,16 @@ import productWedding3_6 from '/textures/wedding/wedding-03-6.jpg';
 import productWedding3_7 from '/textures/wedding/wedding-03-7.jpg';
 
 // import productWedding4 from '/images/wedding-dress4.jpg';
-
+// const filters = [
+//   "All",
+//   "Silk",
+//   "Brocade",
+//   "Velvet",
+//   "Jacquard",
+//   "Handloom",
+//   "Embroidered",
+//   "Textured",
+// ];
 export const weddingProducts: Product[] = [
   {
     id: 'wedding-01',
@@ -35,7 +44,7 @@ export const weddingProducts: Product[] = [
     image: [productWedding1, productWedding1_1, productWedding1_2, productWedding1_3, productWedding1_4, productWedding1_5, productWedding1_6],
     isNew: true,
     description: 'Elegant cream sherwani with traditional detailing',
-    fabric: 'Silk Brocade',
+    fabric: 'Silk' + 'Brocade' + 'Jacquard' + 'Embroidered' + 'Textured' + 'Handloom',
     colors: ['Cream', 'Gold'],
     tags: ['Wedding', 'Festival', 'Premium']
   },
@@ -47,7 +56,7 @@ export const weddingProducts: Product[] = [
     image: [productWedding2, productWedding2_1, productWedding2_2, productWedding2_3, productWedding2_4, productWedding2_5, productWedding2_6],
     isNew: true,
     description: 'Modern navy blue indo-western with structured fit',
-    fabric: 'Silk Blend',
+    fabric: 'Silk' + 'Velvet' + 'Jacquard' + 'Embroidered' + 'Textured',
     colors: ['Navy Blue'],
     tags: ['Wedding', 'Reception']
   },
@@ -58,7 +67,7 @@ export const weddingProducts: Product[] = [
     price: 18000,
     image: [productWedding3, productWedding3_1, productWedding3_2, productWedding3_3, productWedding3_4, productWedding3_5, productWedding3_6, productWedding3_7],
     description: 'Classic ivory sherwani with fine embroidery work',
-    fabric: 'Silk Embroidery',
+    fabric: 'Silk' + 'Brocade' + 'Jacquard' + 'Embroidered' + 'Textured' + 'Handloom',
     colors: ['Ivory', 'Off White'],
     tags: ['Wedding', 'Premium']
   },

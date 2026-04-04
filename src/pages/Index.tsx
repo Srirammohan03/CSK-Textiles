@@ -47,8 +47,9 @@ const Index = () => {
           <AboutPreview />
         </div>
         {/* <InstagramReels /> */}
-        <VisitUs />
         <CTABanner />
+        <VisitUs />
+
         {/* <div className="h-auto md:h-[160vh] relative z-30">
           <CTABanner />
           <Footer variant="sticky" />

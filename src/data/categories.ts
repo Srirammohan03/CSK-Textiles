@@ -1,14 +1,14 @@
 
-import categorySuiting from "@/assets/suities/Men/19.jpg";
-import categoryShirting from "/images/hl-shirt.jpg";
-import categoryWedding from "/textures/wedding/wedding-01.png";
-import categoryTuxedo from "/images/ethos.jpg";
-import categoryIndoWestern from "@/assets/suities/Men/5851.jpg";
-import categoryBlazers from "/images/hl4.jpg";
-import categoryJodhpuri from "/images/jodhpuri.jpg";
+import categorySuiting from "/images/suiting.png";
+import categoryShirting from "/images/shirting.png";
+import categoryWedding from "/images/jodhpuri.png";
+import categoryTuxedo from "/images/tuxedo.png";
+import categoryIndoWestern from "/images/indo-western.png";
+import categoryBlazers from "/images/blazers.png";
+import categoryJodhpuri from "/images/jodhpuri.png";
 import categoryDCollection from "/images/designer-collections.jpg";
 import categoryEthnic from "/images/ethnic.jpg";
-import categoryPartyWear from "/images/party-wear.jpg";
+import categoryPartyWear from "/images/party-wear.png";
 import categoryVelvet from "/images/designer-collection.jpg";
 import categoryLinen from "/images/linen-wear.jpg";
 export const categories = [
@@ -119,14 +119,7 @@ export const categories = [
     link: "/collections/shirting",
     featured: true,
   },
-  {
-    id: "ethnic-fabrics",
-    name: "Ethnic Fabrics",
-    description: "Rich Indian traditional materials",
-    image: categoryEthnic,
-    link: "/collections/wedding",
-    featured: true,
-  },
+
   {
     id: "party-wear",
     name: "Party Wear",
