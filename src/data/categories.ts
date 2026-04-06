@@ -1,7 +1,7 @@
 
 import categorySuiting from "/images/suiting.png";
 import categoryShirting from "/images/shirting.png";
-import categoryWedding from "/images/jodhpuri.png";
+import categoryWedding from "/images/wedding-sherwan.png";
 import categoryTuxedo from "/images/tuxedo.png";
 import categoryIndoWestern from "/images/indo-western.png";
 import categoryBlazers from "/images/blazers.png";
