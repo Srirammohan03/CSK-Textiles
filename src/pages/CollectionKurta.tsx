@@ -9,6 +9,7 @@ import { ChevronRight, Filter, ShoppingBag, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import { FilterDropdown } from "@/components/FilterDropdown";
+import kurthaBanner from "/images/kurtha.png";
 
 const CollectionKurta = () => {
   const { data: products = [], isLoading } = useProducts("kurta-pyjama");
@@ -44,9 +45,19 @@ const CollectionKurta = () => {
 
       <main className="flex-grow">
         <section className="relative py-28 md:py-40 overflow-hidden bg-primary/20">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1597843797221-39656811a01d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-60 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505]" />
-          
+          <motion.div
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0"
+          >
+            <img
+              src={kurthaBanner}
+              alt="Premium Kurtha Pyjama Collection"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/20" />
+          </motion.div>
           <div className="relative h-full container mx-auto px-4 flex flex-col justify-center items-center text-center">
             <motion.div
               initial={{ y: 30, opacity: 0 }}
@@ -60,7 +71,8 @@ const CollectionKurta = () => {
                 Kurta <span className="italic font-light">Pyjama</span>
               </h1>
               <p className="max-w-xl mx-auto text-lg text-white/60 font-light leading-relaxed">
-                Heritage craftsmanship meets contemporary design. Discover our curated collection of ethnic elegance.
+                Heritage craftsmanship meets contemporary design. Discover our
+                curated collection of ethnic elegance.
               </p>
             </motion.div>
           </div>

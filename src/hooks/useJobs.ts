@@ -1,17 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import type { Job } from "@/data/jobs";
+import { jobs } from "@/data/jobs";
 
-export interface Job {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  requirements: string;
-  package: string;
-  location: string;
-  type: string;
-  status: string;
-  createdAt: string;
-}
+export type { Job } from "@/data/jobs";
 
 export interface JobApplication {
   id: number;
@@ -26,16 +17,10 @@ export interface JobApplication {
   job?: { title: string };
 }
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
 export const useJobs = () => {
   return useQuery<Job[]>({
     queryKey: ["jobs"],
-    queryFn: async () => {
-      const res = await fetch(`${API_URL}/jobs`);
-      if (!res.ok) throw new Error("Failed to fetch jobs");
-      return res.json();
-    },
+    queryFn: async () => jobs,
   });
 };
 
@@ -44,9 +29,9 @@ export const useJob = (id: string | undefined) => {
     queryKey: ["job", id],
     queryFn: async () => {
       if (!id) throw new Error("Job ID is required");
-      const res = await fetch(`${API_URL}/jobs/${id}`);
-      if (!res.ok) throw new Error("Failed to fetch job");
-      return res.json();
+      const job = jobs.find((item) => String(item.id) === id);
+      if (!job) throw new Error("Job not found");
+      return job;
     },
     enabled: !!id,
   });

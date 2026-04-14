@@ -5,7 +5,6 @@ import { ArrowRight } from "lucide-react";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { getImageUrl } from "@/api/config";
 
 interface ProductCardProps {
   id: string;
@@ -137,7 +136,7 @@ export const ProductCard = React.forwardRef<HTMLDivElement, ProductCardProps>(
         >
           {/* Full Cover Image */}
           <motion.img
-            src={getImageUrl(image)}
+            src={image}
             alt={name}
             className="absolute inset-0 w-full h-full object-contain"
             variants={imageVariants}

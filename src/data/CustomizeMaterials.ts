@@ -79,19 +79,19 @@ export const outfitImageAssets = {
         },
         "Shirt (Half Hands)": {
             front: {
-                base: "/customize/half-hands/front.png",
-                mask: "/customize/half-hands/front-mask.png",
-                detail: "/customize/half-hands/front-detail.png",
+                base: "/customize/shirt/half-hands/front.png",
+                mask: "/customize/shirt/half-hands/front-mask.png",
+                detail: "/customize/shirt/half-hands/front-detail.png",
             },
             left: {
-                base: "/customize/half-hands/left.png",
-                mask: "/customize/half-hands/left-mask.png",
-                detail: "/customize/half-hands/left-detail.png",
+                base: "/customize/shirt/half-hands/left.png",
+                mask: "/customize/shirt/half-hands/left-mask.png",
+                detail: "/customize/shirt/half-hands/left-detail.png",
             },
             right: {
-                base: "/customize/half-hands/right.png",
-                mask: "/customize/half-hands/right-mask.png",
-                detail: "/customize/half-hands/right-detail.png",
+                base: "/customize/shirt/half-hands/right.png",
+                mask: "/customize/shirt/half-hands/right-mask.png",
+                detail: "/customize/shirt/half-hands/right-detail.png",
             },
         },
         "Mandarin Full Hands": {

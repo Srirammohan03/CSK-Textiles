@@ -83,11 +83,11 @@ const About = () => {
           {/* Main Background Image */}
           <div className="absolute inset-0 z-0">
             <img
-              src="/images/premium-banner.png"
+              src="/images/aboutB.png"
               alt="Luxury Tailoring"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-black/20" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/30" />
             <div className="absolute inset-0 mesh-bg opacity-30" />
           </div>
@@ -114,7 +114,7 @@ const About = () => {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 1 }}
-                className="text-4xl md:text-8xl font-display font-bold text-white mb-6 md:mb-10 leading-[1] tracking-tighter"
+                className="text-3xl md:text-6xl font-display font-bold text-white mb-6 md:mb-10 leading-[1] tracking-tighter"
               >
                 The Art of <br />
                 <span className="italic text-yellow-400 drop-shadow-2xl">

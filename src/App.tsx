@@ -2,7 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import AOS from "aos";
+import "aos/dist/aos.css";
+
+import ScrollToTop from "./components/ScrollToTop";
+import WhatsAppIcon from "./components/WhatsAppIcon";
+
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -16,22 +23,62 @@ import ProductDetails from "./pages/ProductDetails";
 import Customize from "./pages/Customize";
 import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
-import AOS from "aos";
-import "aos/dist/aos.css";
-import ScrollToTop from "./components/ScrollToTop";
-import WhatsAppIcon from "./components/WhatsAppIcon";
 import TermsPage from "./pages/Terms";
 import PrivacyPage from "./pages/Privacy";
 
 import AdminLogin from "./pages/admin/Login";
-import AdminDashboard from "./pages/admin/Dashboard.tsx";
-import AdminProducts from "./pages/admin/Products.tsx";
-import AdminEnquiries from "./pages/admin/Enquiries.tsx";
-import AdminFabrics from "./pages/admin/Fabrics.tsx";
-import AdminCareers from "./pages/admin/Careers.tsx";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/Products";
+import AdminEnquiries from "./pages/admin/Enquiries";
+import AdminFabrics from "./pages/admin/Fabrics";
+import AdminCareers from "./pages/admin/Careers";
 
 const queryClient = new QueryClient();
+
+function AppRoutes() {
+  const location = useLocation();
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  return (
+    <>
+      <ScrollToTop />
+
+      {!isAdminRoute && <WhatsAppIcon />}
+
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/collections/suiting" element={<CollectionSuiting />} />
+        <Route path="/collections/shirting" element={<CollectionShirting />} />
+        <Route path="/collections/wedding" element={<CollectionWedding />} />
+        <Route path="/collections/kurta-pyjama" element={<CollectionKurta />} />
+        <Route
+          path="/collections/ready-to-wear"
+          element={<CollectionReadyToWear />}
+        />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/customize" element={<Customize />} />
+        <Route path="/gallery" element={<Gallery />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/enquiries" element={<AdminEnquiries />} />
+        <Route path="/admin/fabrics" element={<AdminFabrics />} />
+        <Route path="/admin/careers" element={<AdminCareers />} />
+
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
 
 const App = () => {
   useEffect(() => {
@@ -48,55 +95,14 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+
         <BrowserRouter
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true,
           }}
         >
-          <ScrollToTop />
-          <WhatsAppIcon />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route
-              path="/collections/suiting"
-              element={<CollectionSuiting />}
-            />
-            <Route
-              path="/collections/shirting"
-              element={<CollectionShirting />}
-            />
-            <Route
-              path="/collections/wedding"
-              element={<CollectionWedding />}
-            />
-            <Route
-              path="/collections/kurta-pyjama"
-              element={<CollectionKurta />}
-            />
-            <Route
-              path="/collections/ready-to-wear"
-              element={<CollectionReadyToWear />}
-            />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/customize" element={<Customize />} />
-            <Route path="/gallery" element={<Gallery />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/products" element={<AdminProducts />} />
-            <Route path="/admin/enquiries" element={<AdminEnquiries />} />
-            <Route path="/admin/fabrics" element={<AdminFabrics />} />
-            <Route path="/admin/careers" element={<AdminCareers />} />
-
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

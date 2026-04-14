@@ -1,35 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import { API_BASE_URL } from "@/api/config";
+import { API_BASE_URL, getImageUrl } from "@/api/config";
+import type { Product } from "@/data/products";
 
-export interface Product {
-  id: number | string;
-  name: string;
-  category: string;
-  price: number;
-  image: string[];
-  isNewArrival: boolean;
-  description: string;
-  longDescription?: string;
-  fabric: string;
-  colors: string[];
-  tags?: string[];
-  style?: string;
-}
+export type { Product } from "@/data/products";
 
-const fetchProducts = async (category?: string, newArrival?: boolean): Promise<Product[]> => {
-  const url = new URL(`${API_BASE_URL}/products`);
-  if (category) url.searchParams.append("category", category);
-  if (newArrival) url.searchParams.append("newArrival", "true");
+const parseImagePaths = (product: Product): Product => {
+  if (product && product.image) {
+    if (Array.isArray(product.image)) {
+      product.image = product.image.map(img => getImageUrl(img));
+    } else if (typeof product.image === "string") {
+      // @ts-ignore - Handle string edge cases properly though TS says string[]
+      product.image = [getImageUrl(product.image)];
+    }
+  }
+  return product;
+};
+
+const fetchProducts = async (category?: string): Promise<Product[]> => {
+  const url = category 
+    ? `${API_BASE_URL}/products?category=${category}` 
+    : `${API_BASE_URL}/products`;
+    
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch products");
   
-  const response = await fetch(url.toString());
-  if (!response.ok) throw new Error("Failed to fetch products");
-  return response.json();
+  const data: Product[] = await res.json();
+  return data.map(parseImagePaths);
 };
 
 const fetchProductById = async (id: string): Promise<Product> => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`);
-  if (!response.ok) throw new Error("Product not found");
-  return response.json();
+  const res = await fetch(`${API_BASE_URL}/products/${id}`);
+  if (!res.ok) throw new Error("Product not found");
+  
+  const product: Product = await res.json();
+  return parseImagePaths(product);
 };
 
 export const useProducts = (category?: string) => {
@@ -50,6 +54,11 @@ export const useProduct = (id?: string) => {
 export const useNewArrivals = () => {
   return useQuery({
     queryKey: ["products", "new-arrivals"],
-    queryFn: () => fetchProducts(undefined, true),
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/products?newArrival=true`);
+      if (!res.ok) throw new Error("Failed to fetch new arrivals");
+      const data: Product[] = await res.json();
+      return data.map(parseImagePaths);
+    },
   });
 };

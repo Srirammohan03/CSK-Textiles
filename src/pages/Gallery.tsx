@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 
 // Automatically import all images from the gallery directory
 // Adjusted pattern to accurately match Vite's require patterns if needed, but import.meta.glob is standard
-const images = import.meta.glob('@/assets/gallery/*.{jpg,JPG,png,PNG,jpeg,JPEG,webp}', { eager: true, import: 'default' });
+const images = import.meta.glob(
+  "@/assets/gallery/*.{jpg,JPG,png,PNG,jpeg,JPEG,webp}",
+  { eager: true, import: "default" },
+);
 const allImageUrls = Object.values(images) as string[];
 
 const Gallery = () => {
@@ -40,7 +43,7 @@ const Gallery = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
+        <div className="text-center py-28 md:py-40">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -65,7 +68,8 @@ const Gallery = () => {
             className="text-lg text-gray-500 max-w-2xl mx-auto font-light leading-relaxed"
           >
             A visual journey through our finest fabric creations and bespoke
-            masterpieces. Explore our complete collection of {allImageUrls.length} meticulously crafted designs.
+            masterpieces. Explore our complete collection of{" "}
+            {allImageUrls.length} meticulously crafted designs.
           </motion.p>
         </div>
 

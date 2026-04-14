@@ -15,6 +15,7 @@ import EthosSection from "@/components/EthosSection";
 import { useScroll } from "framer-motion";
 import { useRef } from "react";
 import InstagramReelsHighlights from "@/components/InstagramReelsHighlights";
+import ClientsSection from "./clients-section";
 
 const Index = () => {
   const featuredCategories = categories.filter((c) => c.featured);
@@ -52,6 +53,7 @@ const Index = () => {
 
         <CTABanner />
         <InstagramReelsHighlights />
+        <ClientsSection />
       </main>
       <Footer />
     </div>
