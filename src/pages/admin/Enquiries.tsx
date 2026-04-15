@@ -38,10 +38,10 @@ const AdminEnquiries = () => {
 
   const categories = [
     "All",
+    "shirting",
     "suiting",
     "contact",
     "customize",
-    "General",
     "kurta-pyjama",
     "ready-to-wear",
   ];

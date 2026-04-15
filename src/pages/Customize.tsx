@@ -393,7 +393,7 @@ const Customize = () => {
       payload.append("type", "customize");
 
       // Optional backend save (non-blocking)
-      fetch("http://localhost:5000/api/inquiries", {
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/inquiries`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -401,7 +401,7 @@ const Customize = () => {
         body: JSON.stringify({
           ...formData,
           type: "customize",
-          productCategory: selectedOutfit.toLowerCase(),
+          productCategory: "customize",
           productName: `Custom ${selectedOutfit}${
             selectedOutfit === "Shirt" ? ` (${selectedShirtVariation})` : ""
           }: ${selectedMaterial?.name}`,

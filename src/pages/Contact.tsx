@@ -56,7 +56,7 @@ export default function Contact() {
       payload.append("type", "contact");
 
       // Fire backend attempt (optional)
-      fetch("http://localhost:5000/api/inquiries", {
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/inquiries`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,7 +64,7 @@ export default function Contact() {
         body: JSON.stringify({
           ...formData,
           type: "contact",
-          productCategory: "general",
+          productCategory: "contact",
         }),
       }).catch((err) => {
         console.error("Backend Failed:", err);

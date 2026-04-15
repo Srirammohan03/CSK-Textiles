@@ -74,39 +74,62 @@ const ProductDetails = () => {
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
 
- const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  if (loading) return;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (loading) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  const form = e.currentTarget;
-  const formValues = new FormData(form);
+    const form = e.currentTarget;
+    const formValues = new FormData(form);
 
-  try {
-    const payload = new URLSearchParams();
+    try {
+      // -------------------------
+      // 1. Save to Backend
+      // -------------------------
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/inquiries`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formValues.get("name"),
+          phone: formValues.get("phone"),
+          message: formValues.get("message"),
+          type: "product",
+          productCategory: product?.category || "general",
+          productName: product?.name || "",
+        }),
+      });
 
-    payload.append("name", formValues.get("name") as string);
-    payload.append("phone", formValues.get("phone") as string);
-    payload.append("message", formValues.get("message") as string);
-    payload.append("product", product?.name || "");
-    payload.append("type", "product");
+      // -------------------------
+      // 2. Save to Google Sheets
+      // -------------------------
+      const payload = new URLSearchParams();
 
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      body: payload,
-      mode: "no-cors",
-    });
+      payload.append("name", formValues.get("name") as string);
+      payload.append("phone", formValues.get("phone") as string);
+      payload.append("message", formValues.get("message") as string);
+      payload.append("type", "product");
+      payload.append("product", product?.name || "");
+      payload.append("productCategory", product?.category || "general");
 
-    toast.success("Enquiry sent successfully");
-    form.reset();
-  } catch (err) {
-    console.error("Google Sheets Backup Failed:", err);
-    toast.error("Submission failed");
-  } finally {
-    setLoading(false);
-  }
-};
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: payload,
+        mode: "no-cors",
+      });
+
+      toast.success("Enquiry sent successfully");
+
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      toast.error("Submission failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const productImages = Array.isArray(product.image)
     ? product.image
