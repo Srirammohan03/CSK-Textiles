@@ -36,7 +36,15 @@ const AdminEnquiries = () => {
   const API_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-  const categories = ["All", "Shirting", "Suiting", "Wedding", "General"];
+  const categories = [
+    "All",
+    "suiting",
+    "contact",
+    "customize",
+    "General",
+    "kurta-pyjama",
+    "ready-to-wear",
+  ];
 
   useEffect(() => {
     if (!token) {

@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <AdminSidebar />
         <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-transparent">
           <AdminHeader />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent md:p-10 p-6">
             {children}
           </main>
         </SidebarInset>

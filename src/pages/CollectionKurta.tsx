@@ -78,7 +78,7 @@ const CollectionKurta = () => {
           </div>
         </section>
 
-        <section className="relative z-50 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
+        <section className="relative z-10 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <Link

@@ -1,25 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  ShoppingBag,
-  LogOut,
-  Plus,
-  Search,
-  Bell,
-  Menu,
-  X,
-  Package,
-  Trash2,
-  Edit2,
-  ChevronRight,
-  Briefcase,
-  Mail,
-  Crown,
-  Upload,
-  Loader2,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Search, X, Trash2, Edit2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,14 +8,30 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getImageUrl } from "@/api/config";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { Product } from "@/data/products";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AdminProducts = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [products, setProducts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // const [products, setProducts] = useState<any[]>([]);
+  // const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("All");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mode, setMode] = useState<"create" | "edit">("create");
+  const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -55,40 +52,116 @@ const AdminProducts = () => {
 
   const tabs = [
     "All",
-    "Suiting",
-    "Shirting",
-    "Wedding",
-    "Kurta Pyjama",
-    "Ready To Wear",
+    "suiting",
+    "shirting",
+    "wedding",
+    "kurta-pyjama",
+    "ready-to-wear",
   ];
+
+  const {
+    data: products = [],
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ["products", activeTab, search],
+    enabled: !!token,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+
+      if (activeTab !== "All") {
+        params.append("category", activeTab.toLowerCase());
+      }
+
+      if (search.trim()) {
+        params.append("search", search.trim());
+      }
+
+      const res = await fetch(`${API_URL}/products?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        handleLogout();
+        throw new Error("Unauthorized");
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      return res.json();
+    },
+    placeholderData: keepPreviousData,
+  });
 
   useEffect(() => {
     if (!token) {
       navigate("/admin/login");
-      return;
     }
+  }, [token, navigate]);
 
-    fetchProducts();
-  }, [navigate, token, API_URL]);
+  // useEffect(() => {
+  //   if (!token) {
+  //     navigate("/admin/login");
+  //     return;
+  //   }
 
-  const fetchProducts = async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch(`${API_URL}/products`, {
-        headers: { Authorization: `Bearer ${token}` },
+  //   const delayDebounce = setTimeout(() => {
+  //     fetchProducts(activeTab, search);
+  //   }, 400);
+
+  //   return () => clearTimeout(delayDebounce);
+  // }, [activeTab, search, token]);
+
+  useEffect(() => {
+    if (selectedProduct && isAddModalOpen) {
+      setFormData({
+        name: selectedProduct.name,
+        category: selectedProduct.category,
+        price: selectedProduct.price.toString(),
+        description: selectedProduct.description,
+        fabric: selectedProduct.fabric,
+        isNewArrival: selectedProduct.isNewArrival,
+        image: selectedProduct.image || [],
       });
+    } else if (!selectedProduct && isAddModalOpen) {
+      resetForm();
+    }
+  }, [selectedProduct, isAddModalOpen]);
 
+  const fetchProducts = async (
+    categoryParam = activeTab,
+    searchParam = search,
+  ) => {
+    try {
+      // setIsLoading(true);
+      const params = new URLSearchParams();
+
+      if (categoryParam && categoryParam !== "All") {
+        params.append("category", categoryParam.toLowerCase());
+      }
+
+      if (searchParam.trim()) {
+        params.append("search", searchParam.trim());
+      }
+
+      const res = await fetch(`${API_URL}/products?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.status === 401) {
         handleLogout();
         return;
       }
 
       const data = await res.json();
-      setProducts(data);
+      // setProducts(data);
     } catch (error) {
       toast.error("Failed to fetch products");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -100,10 +173,15 @@ const AdminProducts = () => {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (mode === "edit") {
+      updateMutation.mutate();
+    } else {
+      createMutation.mutate();
+    }
+  };
 
-    try {
+  const createMutation = useMutation({
+    mutationFn: async () => {
       let imageUrls = [...formData.image];
 
       // 1. Upload Image first if selected
@@ -144,21 +222,75 @@ const AdminProducts = () => {
         return;
       }
 
-      if (productRes.ok) {
-        toast.success("Signature piece added to collection");
-        setIsAddModalOpen(false);
-        resetForm();
-        fetchProducts();
-      } else {
-        toast.error("Failed to create product");
+      return await productRes.json();
+    },
+    onSuccess: () => {
+      toast.success("Signature piece added to collection");
+      queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+      setIsAddModalOpen(false);
+      resetForm();
+    },
+    onError: () => {
+      toast.error("Failed to create product");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedProduct) throw new Error("No product selected");
+
+      let imageUrls = [...formData.image];
+
+      if (selectedFile) {
+        const uploadData = new FormData();
+        uploadData.append("image", selectedFile);
+
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: uploadData,
+        });
+
+        if (!uploadRes.ok) throw new Error("Upload failed");
+
+        const path = await uploadRes.text();
+        imageUrls = [path];
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("An error occurred during creation");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+
+      const res = await fetch(`${API_URL}/products/${selectedProduct.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...formData,
+          price: Number(formData.price),
+          image: imageUrls,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Update failed");
+
+      return res.json();
+    },
+
+    onSuccess: () => {
+      toast.success("Product updated successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+      setSelectedProduct(null);
+      setIsAddModalOpen(false);
+      resetForm();
+    },
+
+    onError: () => {
+      toast.error("Failed to update product");
+    },
+  });
 
   const resetForm = () => {
     setFormData({
@@ -171,6 +303,8 @@ const AdminProducts = () => {
       image: [],
     });
     setSelectedFile(null);
+    setSelectedProduct(null);
+    setMode("create");
   };
 
   const handleDelete = async (id: number) => {
@@ -189,8 +323,11 @@ const AdminProducts = () => {
       }
 
       if (res.ok) {
-        setProducts(products.filter((p) => p.id !== id));
         toast.success("Product deleted successfully");
+
+        queryClient.invalidateQueries({
+          queryKey: ["products"],
+        });
       } else {
         toast.error("Failed to delete product");
       }
@@ -205,11 +342,11 @@ const AdminProducts = () => {
     navigate("/admin/login");
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
-      activeTab === "All" ||
-      p.category.toLowerCase() === activeTab.toLowerCase(),
-  );
+  // const filteredProducts = products.filter(
+  //   (p) =>
+  //     activeTab === "All" ||
+  //     p.category.toLowerCase() === activeTab.toLowerCase(),
+  // );
 
   return (
     <AdminLayout>
@@ -223,7 +360,11 @@ const AdminProducts = () => {
           </h2>
         </div>
         <Button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            resetForm();
+            setMode("create");
+            setIsAddModalOpen(true);
+          }}
           className="bg-black hover:bg-black/90 text-white rounded-md px-6 h-10 font-medium text-xs tracking-wide transition-all shadow-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -255,11 +396,13 @@ const AdminProducts = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
             <Input
               placeholder="Search masterworks..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent border-[#EAEAEA] pl-9 h-9 rounded-md focus:ring-0 focus:border-black transition-all w-full text-xs"
             />
           </div>
           <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">
-            {filteredProducts.length} Records
+            {products.length} Records
           </div>
         </div>
 
@@ -287,8 +430,8 @@ const AdminProducts = () => {
                       </td>
                     </tr>
                   ))
-              ) : filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
+              ) : products?.length > 0 ? (
+                products.map((product) => (
                   <tr
                     key={product.id}
                     className="group hover:bg-[#FAFAFA] transition-colors"
@@ -322,7 +465,14 @@ const AdminProducts = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 text-black/40 hover:text-black transition-colors">
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setMode("edit");
+                            setIsAddModalOpen(true);
+                          }}
+                          className="p-2 text-black/40 hover:text-black transition-colors"
+                        >
                           <Edit2 className="w-4 h-4" strokeWidth={2} />
                         </button>
                         <button
@@ -350,213 +500,215 @@ const AdminProducts = () => {
         </div>
       </div>
 
-      {/* Add Product Modal */}
-      <AnimatePresence>
-        {isAddModalOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAddModalOpen(false)}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-            />
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-              className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#EAEAEA]"
-            >
-              <div className="px-8 py-6 border-b border-[#EAEAEA] flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg  tracking-tight text-black">
-                    New Signature Piece
-                  </h3>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="rounded hover:bg-[#F5F5F5] text-black/50 hover:text-black"
+      {/* Add Product Dialog */}
+      <Dialog
+        open={isAddModalOpen}
+        onOpenChange={(open) => {
+          setIsAddModalOpen(open);
+
+          if (!open) {
+            resetForm();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md h-[80vh] p-0 gap-0 overflow-hidden rounded-xl border border-[#EAEAEA]">
+          {/* Header */}
+          <DialogHeader className="px-8 py-6 border-b border-[#EAEAEA]">
+            <DialogTitle className="text-lg font-semibold tracking-tight text-black">
+              {mode === "edit" ? "Edit Signature Piece" : "New Signature Piece"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Body */}
+          <div className="max-h-[85vh] overflow-y-auto px-8 py-6">
+            <form onSubmit={handleCreateProduct} className="space-y-6">
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
+                  Featured Imaging
+                </Label>
+
+                <div
+                  onClick={() =>
+                    document.getElementById("file-upload")?.click()
+                  }
+                  className="border border-dashed border-[#CCCCCC] rounded bg-[#FAFAFA] h-32 flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors overflow-hidden"
                 >
-                  <X className="w-4 h-4" />
-                </Button>
+                  {selectedFile ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={URL.createObjectURL(selectedFile)}
+                        alt="preview"
+                        className="w-full h-full object-cover"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFile(null);
+                        }}
+                        className="absolute top-2 right-2 bg-white px-2 py-1 rounded text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : mode === "edit" && formData.image?.length > 0 ? (
+                    <img
+                      src={getImageUrl(formData.image[0])}
+                      alt="existing"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 text-black/30 mb-2" />
+                      <p className="text-[11px] text-black/50">
+                        Select visual asset
+                      </p>
+                    </>
+                  )}
+
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-8 py-6">
-                <form onSubmit={handleCreateProduct} className="space-y-6">
-                  {/* Image Upload Area */}
-                  <div className="space-y-2">
-                    <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                      Featured Imaging
-                    </Label>
-                    <div
-                      onClick={() =>
-                        document.getElementById("file-upload")?.click()
-                      }
-                      className="border border-dashed border-[#CCCCCC] rounded bg-[#FAFAFA] h-32 flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors group overflow-hidden"
-                    >
-                      {selectedFile ? (
-                        <div className="relative w-full h-full flex items-center justify-center">
-                          <p className="text-xs font-medium text-black">
-                            {selectedFile.name}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute bottom-2 right-2 text-[10px] h-6 text-black/50 hover:text-[#E33D3D]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedFile(null);
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 text-black/30 mb-2 group-hover:text-black transition-colors" />
-                          <p className="text-[11px] font-medium text-black/50">
-                            Select visual asset
-                          </p>
-                        </>
-                      )}
-                      <input
-                        id="file-upload"
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-                    </div>
-                  </div>
+              {/* Name */}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
+                  Collection Name
+                </Label>
 
-                  <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                        Collection Name
-                      </Label>
-                      <Input
-                        placeholder="e.g. Imperial Silk Suit"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        required
-                        className="h-10 rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs shadow-none"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                        Category
-                      </Label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) =>
-                          setFormData({ ...formData, category: e.target.value })
-                        }
-                        className="w-full h-10 rounded border border-[#EAEAEA] focus:border-black focus:ring-0 text-xs font-medium px-3 bg-white shadow-none"
-                      >
-                        <option value="suiting">Suiting</option>
-                        <option value="shirting">Shirting</option>
-                        <option value="wedding">Wedding</option>
-                        <option value="kurta-pyjama">Kurta Pyjama</option>
-                        <option value="ready-to-wear">Ready To Wear</option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                          Market Value (₹)
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="Price"
-                          value={formData.price}
-                          onChange={(e) =>
-                            setFormData({ ...formData, price: e.target.value })
-                          }
-                          required
-                          className="h-10 rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs shadow-none"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                          Fabric Quality
-                        </Label>
-                        <Input
-                          placeholder="e.g. Wool"
-                          value={formData.fabric}
-                          onChange={(e) =>
-                            setFormData({ ...formData, fabric: e.target.value })
-                          }
-                          required
-                          className="h-10 rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs shadow-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                        Detailed Description
-                      </Label>
-                      <Textarea
-                        placeholder="Craftsmanship details..."
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            description: e.target.value,
-                          })
-                        }
-                        required
-                        className="min-h-[100px] rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs resize-none shadow-none"
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-3 bg-[#FAFAFA] border border-[#EAEAEA] p-4 rounded">
-                      <input
-                        type="checkbox"
-                        id="new-arrival"
-                        checked={formData.isNewArrival}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            isNewArrival: e.target.checked,
-                          })
-                        }
-                        className="w-4 h-4 rounded-sm border-[#CCCCCC] text-black focus:ring-0"
-                      />
-                      <label
-                        htmlFor="new-arrival"
-                        className="text-xs font-semibold text-black tracking-wide"
-                      >
-                        Feature as New Arrival
-                      </label>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full h-12 bg-black hover:bg-black/90 text-white rounded font-bold uppercase tracking-[0.15em] text-[10px] transition-all disabled:opacity-50 mt-6"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-3 h-3 animate-spin mr-2" />
-                        Transmitting...
-                      </>
-                    ) : (
-                      "Ratify Signature Piece"
-                    )}
-                  </Button>
-                </form>
+                <Input
+                  placeholder="e.g. Imperial Silk Suit"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      name: e.target.value,
+                    })
+                  }
+                />
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
+                  Category
+                </Label>
+
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      category: e.target.value,
+                    })
+                  }
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="suiting">Suiting</option>
+                  <option value="shirting">Shirting</option>
+                  <option value="wedding">Wedding</option>
+                  <option value="kurta-pyjama">Kurta Pyjama</option>
+                  <option value="ready-to-wear">Ready To Wear</option>
+                </select>
+              </div>
+
+              {/* Price + Fabric */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
+                    Market Value (₹)
+                  </Label>
+
+                  <Input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        price: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
+                    Fabric Quality
+                  </Label>
+
+                  <Input
+                    value={formData.fabric}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        fabric: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
+                  Detailed Description
+                </Label>
+
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      description: e.target.value,
+                    })
+                  }
+                  className="min-h-[120px]"
+                />
+              </div>
+
+              {/* Checkbox */}
+              <div className="flex items-center gap-3 rounded-md border border-[#EAEAEA] bg-[#FAFAFA] p-4">
+                <input
+                  type="checkbox"
+                  checked={formData.isNewArrival}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      isNewArrival: e.target.checked,
+                    })
+                  }
+                />
+
+                <span className="text-sm font-medium">
+                  Feature as New Arrival
+                </span>
+              </div>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="w-full h-11"
+              >
+                {mode === "edit"
+                  ? updateMutation.isPending
+                    ? "Updating..."
+                    : "Update Product"
+                  : createMutation.isPending
+                    ? "Creating..."
+                    : "Create Product"}
+              </Button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

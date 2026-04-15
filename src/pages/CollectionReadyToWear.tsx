@@ -26,16 +26,19 @@ const CollectionReadyToWear = () => {
       if (activeFilter === "All") return true;
 
       const filterMap: Record<string, string> = {
-        "Shirts": "shirting",
-        "Suiting": "suiting",
-        "Wedding": "wedding-sherwani",
+        Shirts: "shirting",
+        Suiting: "suiting",
+        Wedding: "wedding-sherwani",
         "Kurta Pyjama": "kurta-pyjama",
       };
 
-      const targetCategory = filterMap[activeFilter] || activeFilter.toLowerCase();
+      const targetCategory =
+        filterMap[activeFilter] || activeFilter.toLowerCase();
 
       const categoryMatch = p.category?.toLowerCase().includes(targetCategory);
-      const fabricMatch = p.fabric?.toLowerCase().includes(activeFilter.toLowerCase());
+      const fabricMatch = p.fabric
+        ?.toLowerCase()
+        .includes(activeFilter.toLowerCase());
       const tagMatch = p.tags?.some((tag) =>
         tag.toLowerCase().includes(activeFilter.toLowerCase()),
       );
@@ -89,7 +92,7 @@ const CollectionReadyToWear = () => {
           </div>
         </section>
 
-        <section className="relative z-50 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
+        <section className="relative z-10 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex flex-col">

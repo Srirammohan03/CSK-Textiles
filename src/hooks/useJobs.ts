@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@/data/jobs";
 import { jobs } from "@/data/jobs";
+import axios from "axios";
 
 export type { Job } from "@/data/jobs";
 
@@ -20,7 +21,12 @@ export interface JobApplication {
 export const useJobs = () => {
   return useQuery<Job[]>({
     queryKey: ["jobs"],
-    queryFn: async () => jobs,
+    queryFn: async () => {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/jobs`,
+      );
+      return data;
+    },
   });
 };
 

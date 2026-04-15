@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Package, 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
   Mail,
-  LogOut, 
+  LogOut,
   Plus,
   Search,
   Bell,
@@ -23,7 +23,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  FileText
+  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Job, JobApplication } from "@/hooks/useJobs";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { getImageUrl } from "@/api/config";
 
 const AdminCareers = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -43,10 +44,13 @@ const AdminCareers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const navigate = useNavigate();
   const token = localStorage.getItem("admin_token");
-  const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  const API_URL =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
   // Form State for new Job
   const [jobFormData, setJobFormData] = useState({
@@ -71,10 +75,14 @@ const AdminCareers = () => {
     try {
       setIsLoading(true);
       const [jobsRes, appsRes] = await Promise.all([
-        fetch(`${API_URL}/jobs/admin`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/jobs/applications`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/jobs/admin`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_URL}/jobs/applications`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
-      
+
       if (jobsRes.ok && appsRes.ok) {
         setJobs(await jobsRes.json());
         setApplications(await appsRes.json());
@@ -89,20 +97,34 @@ const AdminCareers = () => {
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     try {
-      const res = await fetch(`${API_URL}/jobs`, {
-        method: "POST",
+      const url = isEditMode
+        ? `${API_URL}/jobs/${editingJob?.id}`
+        : `${API_URL}/jobs`;
+
+      const method = isEditMode ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(jobFormData)
+        body: JSON.stringify(jobFormData),
       });
 
       if (res.ok) {
-        toast.success("Job listing published");
+        toast.success(
+          isEditMode ? "Job updated successfully" : "Job listing published",
+        );
+
         setIsAddModalOpen(false);
+        setIsEditMode(false);
+        setEditingJob(null);
+
         fetchData();
+
         setJobFormData({
           title: "",
           category: "Design",
@@ -114,26 +136,49 @@ const AdminCareers = () => {
         });
       }
     } catch (error) {
-      toast.error("Failed to publish job");
+      toast.error(
+        isEditMode ? "Failed to update job" : "Failed to publish job",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteJob = async (id: number) => {
-    if (!confirm("Are you sure? This will also remove all candidate submissions for this role.")) return;
+    if (
+      !confirm(
+        "Are you sure? This will also remove all candidate submissions for this role.",
+      )
+    )
+      return;
     try {
       const res = await fetch(`${API_URL}/jobs/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         toast.success("Job removed from systems");
         fetchData();
       }
     } catch (error) {
-       toast.error("Deletion failed");
+      toast.error("Deletion failed");
     }
+  };
+
+  const handleEditJob = (job: Job) => {
+    setEditingJob(job);
+    setIsEditMode(true);
+    setIsAddModalOpen(true);
+
+    setJobFormData({
+      title: job.title,
+      category: job.category,
+      description: job.description,
+      requirements: job.requirements,
+      package: job.package,
+      location: job.location,
+      type: job.type,
+    });
   };
 
   const handleLogout = () => {
@@ -242,7 +287,10 @@ const AdminCareers = () => {
                         </span>
                         <span className="flex items-center gap-1.5 text-black">
                           <Users className="w-3.5 h-3.5" />
-                          {applications.filter((a) => a.jobId === job.id).length}{" "}
+                          {
+                            applications.filter((a) => a.jobId === job.id)
+                              .length
+                          }{" "}
                           Applicants
                         </span>
                       </div>
@@ -254,7 +302,10 @@ const AdminCareers = () => {
                       >
                         <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                       </button>
-                      <button className="p-2 text-black/40 hover:text-black transition-colors">
+                      <button
+                        onClick={() => handleEditJob(job)}
+                        className="p-2 text-black/40 hover:text-black transition-colors"
+                      >
                         <Edit className="w-4 h-4" strokeWidth={1.5} />
                       </button>
                     </div>
@@ -263,7 +314,10 @@ const AdminCareers = () => {
               ))
             ) : (
               <div className="lg:col-span-2 h-64 flex flex-col items-center justify-center bg-white rounded-lg border border-dashed border-[#CCCCCC] text-black/40">
-                <Briefcase className="w-8 h-8 mb-4 opacity-50" strokeWidth={1} />
+                <Briefcase
+                  className="w-8 h-8 mb-4 opacity-50"
+                  strokeWidth={1}
+                />
                 <p className=" italic text-xs">
                   No active recruitment campaigns
                 </p>
@@ -345,11 +399,7 @@ const AdminCareers = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <a
-                            href={
-                              app.resumeUrl.startsWith("http")
-                                ? app.resumeUrl
-                                : `${API_URL.replace("/api", "")}/uploads/${app.resumeUrl}`
-                            }
+                            href={getImageUrl(app.resumeUrl) || "#"}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 p-2 text-black/50 hover:text-black transition-colors"
@@ -406,7 +456,11 @@ const AdminCareers = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setIsEditMode(false);
+                    setEditingJob(null);
+                  }}
                   className="rounded hover:bg-[#F5F5F5] text-black/50 hover:text-black"
                 >
                   <X className="w-4 h-4" />
@@ -427,7 +481,10 @@ const AdminCareers = () => {
                           className="h-10 rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs shadow-none"
                           value={jobFormData.title}
                           onChange={(e) =>
-                            setJobFormData({ ...jobFormData, title: e.target.value })
+                            setJobFormData({
+                              ...jobFormData,
+                              title: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -439,10 +496,15 @@ const AdminCareers = () => {
                           className="w-full h-10 rounded border border-[#EAEAEA] focus:border-black focus:ring-0 text-xs font-medium px-3 bg-white shadow-none"
                           value={jobFormData.category}
                           onChange={(e) =>
-                            setJobFormData({ ...jobFormData, category: e.target.value })
+                            setJobFormData({
+                              ...jobFormData,
+                              category: e.target.value,
+                            })
                           }
                         >
-                          <option value="Production">Production & Tailoring</option>
+                          <option value="Production">
+                            Production & Tailoring
+                          </option>
                           <option value="Retail">Retail & Store</option>
                           <option value="Design">Fashion Design</option>
                           <option value="Operations">Operations</option>
@@ -461,7 +523,10 @@ const AdminCareers = () => {
                           className="h-10 rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs shadow-none"
                           value={jobFormData.location}
                           onChange={(e) =>
-                            setJobFormData({ ...jobFormData, location: e.target.value })
+                            setJobFormData({
+                              ...jobFormData,
+                              location: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -475,7 +540,10 @@ const AdminCareers = () => {
                           className="h-10 rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs shadow-none"
                           value={jobFormData.package}
                           onChange={(e) =>
-                            setJobFormData({ ...jobFormData, package: e.target.value })
+                            setJobFormData({
+                              ...jobFormData,
+                              package: e.target.value,
+                            })
                           }
                         />
                       </div>
@@ -491,7 +559,10 @@ const AdminCareers = () => {
                         className="min-h-[100px] rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs resize-none shadow-none"
                         value={jobFormData.description}
                         onChange={(e) =>
-                          setJobFormData({ ...jobFormData, description: e.target.value })
+                          setJobFormData({
+                            ...jobFormData,
+                            description: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -506,7 +577,10 @@ const AdminCareers = () => {
                         className="min-h-[100px] rounded border-[#EAEAEA] focus:border-black focus:ring-0 text-xs resize-none shadow-none"
                         value={jobFormData.requirements}
                         onChange={(e) =>
-                          setJobFormData({ ...jobFormData, requirements: e.target.value })
+                          setJobFormData({
+                            ...jobFormData,
+                            requirements: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -520,8 +594,10 @@ const AdminCareers = () => {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-3 h-3 animate-spin mr-2" />
-                        Transmitting...
+                        Saving...
                       </>
+                    ) : isEditMode ? (
+                      "Update Position"
                     ) : (
                       "Publish Position"
                     )}

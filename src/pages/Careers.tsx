@@ -23,10 +23,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 const Careers = () => {
   const { data: jobs = [], isLoading } = useJobs();
-
+  console.log(jobs);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplying, setIsApplying] = useState(false);
@@ -53,47 +55,80 @@ const Careers = () => {
     );
   }, [jobs, searchTerm]);
 
-const GOOGLE_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
+  const GOOGLE_SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
 
-const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+  const handleApplyMutation = useMutation({
+    mutationFn: async (form: HTMLFormElement) => {
+      if (!selectedJob) throw new Error("No job selected");
+      if (!resumeFile) throw new Error("Please upload resume");
 
-  if (!selectedJob || !resumeFile) {
-    toast.error("Please upload resume");
-    return;
-  }
+      const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+      const email = (form.elements.namedItem("email") as HTMLInputElement)
+        .value;
+      const phone = (form.elements.namedItem("phone") as HTMLInputElement)
+        .value;
+      const message = (
+        form.elements.namedItem("message") as HTMLTextAreaElement
+      ).value;
 
-  setSubmitting(true);
+      const uploadData = new FormData();
+      uploadData.append("file", resumeFile);
 
-  try {
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+      const uploadRes = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/upload/career`,
+        uploadData,
+      );
 
-    formData.append("type", "job_application");
-    formData.append("jobTitle", selectedJob.title);
-    formData.append("jobId", String(selectedJob.id));
-    formData.append("resume", resumeFile);
+      const resumeUrl = uploadRes.data.url;
 
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      body: formData,
-      mode: "no-cors",
-    });
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/jobs/apply`,
+        {
+          jobId: selectedJob.id,
+          name,
+          email,
+          phone,
+          message,
+          resumeUrl,
+        },
+      );
 
-    toast.success("Application submitted successfully.");
+      // const googleForm = new FormData();
+      // googleForm.append("type", "job_application");
+      // googleForm.append("jobTitle", selectedJob.title);
+      // googleForm.append("jobId", String(selectedJob.id));
+      // googleForm.append("name", name);
+      // googleForm.append("email", email);
+      // googleForm.append("phone", phone);
+      // googleForm.append("message", message);
+      // googleForm.append("resume", resumeFile);
 
-    setSelectedJob(null);
-    setIsApplying(false);
-    setResumeFile(null);
-    form.reset();
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to submit application");
-  } finally {
-    setSubmitting(false);
-  }
-};
+      // await fetch(GOOGLE_SCRIPT_URL, {
+      //   method: "POST",
+      //   body: googleForm,
+      //   mode: "no-cors",
+      // });
+
+      return data;
+    },
+
+    onSuccess: () => {
+      toast.success("Application submitted");
+      setResumeFile(null);
+      setSelectedJob(null);
+      setIsApplying(false);
+    },
+
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed");
+    },
+  });
+
+  const handleSubmitApply = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleApplyMutation.mutate(e.currentTarget);
+  };
 
   return (
     <div className="min-h-screen bg-white text-black overflow-x-hidden">
@@ -144,40 +179,73 @@ const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className="group rounded-[2.5rem] border border-[#eadfcd] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500"
+                  className="group relative overflow-hidden rounded-[2rem] border border-[#eadfcd] bg-white p-7 shadow-[0_10px_40px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_70px_rgba(0,0,0,0.09)] hover:-translate-y-1 transition-all duration-500"
                 >
-                  <Badge className="mb-5 rounded-full border border-[#f4d7a1] bg-[#fff7e8] px-4 py-1 text-[#d49a1f] font-semibold">
-                    {job.category}
-                  </Badge>
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between mb-5">
+                    <Badge className="rounded-full bg-[#fff7e8] text-[#d49a1f] border border-[#f4d7a1] px-4 py-1 font-medium">
+                      {job.category}
+                    </Badge>
 
-                  <h3 className="text-[2rem] leading-tight font-bold text-[#111827] mb-6">
+                    <Badge
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs font-semibold border",
+                        job.status === "Open"
+                          ? "bg-green-50 text-green-700 border-green-200"
+                          : "bg-red-50 text-red-700 border-red-200",
+                      )}
+                    >
+                      {job.status}
+                    </Badge>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-2xl font-bold text-[#111827] leading-snug mb-3 line-clamp-2">
                     {job.title}
                   </h3>
 
-                  <div className="space-y-4 text-[15px] text-slate-400 mb-8">
+                  {/* Description */}
+                  <p className="text-slate-500 text-sm leading-7 mb-6 line-clamp-3">
+                    {job.description}
+                  </p>
+
+                  {/* Details */}
+                  <div className="space-y-3 text-sm text-slate-600 mb-8">
                     <div className="flex items-center gap-3">
                       <MapPin className="w-4 h-4 text-[#d49a1f]" />
-                      {job.location}
+                      <span>{job.location}</span>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <IndianRupee className="w-4 h-4 text-[#d49a1f]" />
-                      {job.package}
+                      <span>{job.package} LPA</span>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <Briefcase className="w-4 h-4 text-[#d49a1f]" />
-                      {job.type}
+                      <span>{job.type}</span>
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => setSelectedJob(job)}
-                    className="w-full h-14 rounded-2xl bg-[#f4b400] text-black hover:bg-[#e8ab00] font-semibold text-base shadow-md"
-                  >
-                    View Opportunity
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <span className="text-xs text-slate-400">
+                      Posted{" "}
+                      {new Date(job.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+
+                    <Button
+                      onClick={() => setSelectedJob(job)}
+                      className="rounded-xl bg-[#f4b400] text-black hover:bg-[#e8ab00] font-semibold px-5"
+                    >
+                      View
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -299,7 +367,7 @@ const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
                     </div>
                   ) : (
                     <form
-                      onSubmit={handleApply}
+                      onSubmit={handleSubmitApply}
                       className="
                   rounded-3xl
                   border
@@ -385,7 +453,7 @@ const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
 
                       <Button
                         type="submit"
-                        disabled={submitting}
+                        disabled={handleApplyMutation.isPending}
                         className="
                     w-full
                     h-14
@@ -396,7 +464,7 @@ const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
                     font-semibold
                   "
                       >
-                        {submitting ? (
+                        {handleApplyMutation.isPending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                           "Submit Application"
