@@ -43,7 +43,7 @@ const AdminProducts = () => {
     isNewArrival: false,
     image: [] as string[],
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const navigate = useNavigate();
   const token = localStorage.getItem("admin_token");
@@ -166,8 +166,8 @@ const AdminProducts = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setSelectedFile(e.target.files[0]);
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
     }
   };
 
@@ -184,26 +184,26 @@ const AdminProducts = () => {
     mutationFn: async () => {
       let imageUrls = [...formData.image];
 
-      // 1. Upload Image first if selected
-      if (selectedFile) {
-        const uploadData = new FormData();
-        uploadData.append("image", selectedFile);
+      if (selectedFiles.length > 0) {
+        const uploadedImages = [];
 
-        const uploadRes = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: uploadData,
-        });
+        for (const file of selectedFiles) {
+          const uploadData = new FormData();
+          uploadData.append("image", file);
 
-        if (uploadRes.status === 401) {
-          toast.error("Session expired. Please log in again.");
-          handleLogout();
-          return;
+          const uploadRes = await fetch(`${API_URL}/upload`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: uploadData,
+          });
+
+          if (!uploadRes.ok) throw new Error("Upload failed");
+
+          const path = await uploadRes.text();
+          uploadedImages.push(path);
         }
 
-        if (!uploadRes.ok) throw new Error("Upload failed");
-        const path = await uploadRes.text();
-        imageUrls = [path]; // Use only the newly uploaded image for now
+        imageUrls = uploadedImages;
       }
 
       // 2. Create Product
@@ -243,20 +243,26 @@ const AdminProducts = () => {
 
       let imageUrls = [...formData.image];
 
-      if (selectedFile) {
-        const uploadData = new FormData();
-        uploadData.append("image", selectedFile);
+      if (selectedFiles.length > 0) {
+        const uploadedImages = [];
 
-        const uploadRes = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: uploadData,
-        });
+        for (const file of selectedFiles) {
+          const uploadData = new FormData();
+          uploadData.append("image", file);
 
-        if (!uploadRes.ok) throw new Error("Upload failed");
+          const uploadRes = await fetch(`${API_URL}/upload`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: uploadData,
+          });
 
-        const path = await uploadRes.text();
-        imageUrls = [path];
+          if (!uploadRes.ok) throw new Error("Upload failed");
+
+          const path = await uploadRes.text();
+          uploadedImages.push(path);
+        }
+
+        imageUrls = uploadedImages;
       }
 
       const res = await fetch(`${API_URL}/products/${selectedProduct.id}`, {
@@ -302,7 +308,7 @@ const AdminProducts = () => {
       isNewArrival: false,
       image: [],
     });
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setSelectedProduct(null);
     setMode("create");
   };
@@ -523,58 +529,78 @@ const AdminProducts = () => {
           <div className="max-h-[85vh] overflow-y-auto px-8 py-6">
             <form onSubmit={handleCreateProduct} className="space-y-6">
               {/* Image Upload */}
+
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                  Featured Imaging
+                  Product Images
                 </Label>
 
                 <div
                   onClick={() =>
                     document.getElementById("file-upload")?.click()
                   }
-                  className="border border-dashed border-[#CCCCCC] rounded bg-[#FAFAFA] h-32 flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors overflow-hidden"
+                  className="border border-dashed rounded-lg p-4 cursor-pointer"
                 >
-                  {selectedFile ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={URL.createObjectURL(selectedFile)}
-                        alt="preview"
-                        className="w-full h-full object-cover"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFile(null);
-                        }}
-                        className="absolute top-2 right-2 bg-white px-2 py-1 rounded text-xs"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : mode === "edit" && formData.image?.length > 0 ? (
-                    <img
-                      src={getImageUrl(formData.image[0])}
-                      alt="existing"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 text-black/30 mb-2" />
-                      <p className="text-[11px] text-black/50">
-                        Select visual asset
-                      </p>
-                    </>
-                  )}
+                  <p className="text-sm text-center text-muted-foreground">
+                    Click to Upload Multiple Images
+                  </p>
 
                   <input
                     id="file-upload"
                     type="file"
+                    multiple
                     className="hidden"
                     onChange={handleFileChange}
                   />
                 </div>
+
+                {/* Preview New Files */}
+                {selectedFiles.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="relative h-24 rounded overflow-hidden border"
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          className="w-full h-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedFiles((prev) =>
+                              prev.filter((_, i) => i !== index),
+                            )
+                          }
+                          className="absolute top-1 right-1 bg-white rounded-full p-1"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Existing Images in Edit */}
+                {selectedFiles.length === 0 &&
+                  mode === "edit" &&
+                  formData.image?.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      {formData.image.map((img, index) => (
+                        <div
+                          key={index}
+                          className="h-24 rounded overflow-hidden border"
+                        >
+                          <img
+                            src={getImageUrl(img)}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               {/* Name */}
