@@ -27,8 +27,26 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 
 const Careers = () => {
-  const { data: jobs = [], isLoading } = useJobs();
-  console.log(jobs);
+  const { data, isLoading } = useJobs();
+
+  type JobsResponse =
+    | Job[]
+    | {
+        jobs?: Job[];
+        data?: Job[];
+      }
+    | undefined;
+
+  const typedData = data as JobsResponse;
+
+  const jobs: Job[] = Array.isArray(typedData)
+    ? typedData
+    : Array.isArray(typedData?.jobs)
+      ? typedData.jobs
+      : Array.isArray(typedData?.data)
+        ? typedData.data
+        : [];
+  // console.log(jobs);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplying, setIsApplying] = useState(false);
@@ -45,14 +63,18 @@ const Careers = () => {
       document.body.style.overflow = "";
     };
   }, [selectedJob]);
-
   const filteredJobs = useMemo(() => {
-    return jobs.filter(
-      (job) =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return jobs.filter((job) => {
+      const title = job.title?.toLowerCase() || "";
+      const category = job.category?.toLowerCase() || "";
+      const location = job.location?.toLowerCase() || "";
+
+      return (
+        title.includes(searchTerm.toLowerCase()) ||
+        category.includes(searchTerm.toLowerCase()) ||
+        location.includes(searchTerm.toLowerCase())
+      );
+    });
   }, [jobs, searchTerm]);
 
   const GOOGLE_SCRIPT_URL =

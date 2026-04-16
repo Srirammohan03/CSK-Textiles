@@ -163,7 +163,7 @@ const ServicesGrid = () => {
       <div
         ref={bgRef}
         className="absolute inset-0 z-0 bg-cover bg-center origin-center"
-        style={{ backgroundImage: 'url("/images/services.png")' }}
+        style={{ backgroundImage: 'url("/images/2151914997.jpg")' }}
       />
 
       <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">

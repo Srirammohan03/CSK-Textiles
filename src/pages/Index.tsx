@@ -28,7 +28,7 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col font-body">
+    <div className="h-screen flex flex-col font-body">
       <Header />
       <main>
         <div className="relative h-auto md:h-[200dvh] z-30">
@@ -37,10 +37,6 @@ const Index = () => {
         </div>
 
         <CategoryGrid categories={featuredCategories} />
-
-        {/* {!isLoading && newArrivals.length > 0 && (
-          <ProductCarousel products={newArrivals} />
-        )} */}
 
         <ServicesGrid />
 
