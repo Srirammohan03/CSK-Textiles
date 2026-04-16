@@ -10,12 +10,12 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-[100dvh] w-full  bg-[#FAFAFA]">
+      <div className="flex h-[100dvh] w-full bg-[#FAFAFA]">
         {/* Sidebar */}
         <AdminSidebar />
 
         {/* Main Area */}
-        <SidebarInset className="flex flex-1 flex-col  min-w-0">
+        <SidebarInset className="flex flex-1 flex-col min-w-0">
           {/* Header - Fixed at top */}
           <AdminHeader />
 

@@ -85,7 +85,7 @@ const CollectionWedding = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <Link
                 to="/customize"
-                state={{ outfit: "Wedding outfit" }}
+                state={{ outfit: "Wedding_outfit" }}
                 className="w-full md:w-auto"
               >
                 <Button className="w-full md:w-auto rounded-full px-8 h-12 md:h-14 bg-white text-black hover:bg-gray-200 transition-all duration-300 shadow-xl group text-xs md:text-sm font-bold tracking-wide">

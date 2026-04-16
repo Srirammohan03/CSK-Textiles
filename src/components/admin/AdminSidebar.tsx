@@ -22,82 +22,93 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  {
-    title: "Executive Summary",
-    icon: Grip,
-    path: "/admin/dashboard",
-  },
-  {
-    title: "Master Collection",
-    icon: ShoppingBag,
-    path: "/admin/products",
-  },
-  {
-    title: "Fabric Archives",
-    icon: Package,
-    path: "/admin/fabrics",
-  },
-  {
-    title: "Enquiries",
-    icon: Mail,
-    path: "/admin/enquiries",
-  },
-  {
-    title: "Human Capital",
-    icon: Briefcase,
-    path: "/admin/careers",
-  },
+  { title: "Executive Summary", icon: Grip, path: "/admin/dashboard" },
+  { title: "Master Collection", icon: ShoppingBag, path: "/admin/products" },
+  { title: "Fabric Archives", icon: Package, path: "/admin/fabrics" },
+  { title: "Enquiries", icon: Mail, path: "/admin/enquiries" },
+  { title: "Human Capital", icon: Briefcase, path: "/admin/careers" },
 ];
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state, toggleSidebar, isMobile } = useSidebar();
+
+  const { state, toggleSidebar, isMobile, openMobile, setOpenMobile } =
+    useSidebar();
+
+  const collapsed = !isMobile && state === "collapsed";
+  const isExpanded = !collapsed;
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+
+    if (isMobile && openMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
     navigate("/admin/login");
-  };
 
-  const isExpanded = isMobile || state === "expanded";
+    if (isMobile && openMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-[#EAEAEA] bg-white text-black font-body"
+      className="border-r border-[#EAEAEA] bg-white text-black"
     >
-      {/* Header */}
-      <SidebarHeader className="border-b border-[#EAEAEA] px-5 py-7">
-        <div className="flex items-center justify-between gap-3 overflow-hidden">
-          <div className="flex items-center gap-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black text-lg font-bold italic text-white shadow-xl">
+      {/* HEADER */}
+      <SidebarHeader
+        className={cn(
+          "border-b border-[#EAEAEA] transition-all duration-300",
+          collapsed ? "px-2 py-5" : "px-5 py-7",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center",
+            collapsed ? "flex-col gap-4" : "justify-between gap-3",
+          )}
+        >
+          {/* Logo */}
+          <div
+            className={cn(
+              "flex items-center",
+              collapsed ? "justify-center" : "gap-4",
+            )}
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black text-lg font-bold italic text-white shadow-xl">
               C
             </div>
 
-            {isExpanded && (
+            {!collapsed && (
               <div className="flex flex-col">
-                <div className="text-[15px] font-semibold tracking-tight text-black">
+                <span className="text-[15px] font-semibold tracking-tight">
                   CSK Tailored
-                </div>
-                <div className="text-[9px] uppercase tracking-[0.2em] text-black/40 font-bold">
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-black/40">
                   Admin Console
-                </div>
+                </span>
               </div>
             )}
           </div>
 
-          {/* Collapse Button - Visible only on desktop */}
+          {/* Toggle Button */}
           {!isMobile && (
             <Button
               size="icon"
               variant="ghost"
               onClick={toggleSidebar}
-              className="h-8 w-8 text-black/40 hover:bg-[#F5F5F5] hover:text-black"
+              className="h-8 w-8 shrink-0 rounded-lg text-black/50 hover:bg-[#F5F5F5]"
             >
               <ChevronLeft
                 className={cn(
                   "h-4 w-4 transition-transform duration-300",
-                  state === "collapsed" && "rotate-180",
+                  collapsed && "rotate-180",
                 )}
               />
             </Button>
@@ -105,39 +116,35 @@ export default function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      {/* Menu Content */}
-      <SidebarContent className="px-3 py-6">
-        <SidebarMenu className="space-y-1.5">
+      {/* MENU */}
+      <SidebarContent className="px-2 py-5">
+        <SidebarMenu className="space-y-2">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const active = location.pathname === item.path;
 
             return (
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton
-                  tooltip={item.title}
-                  isActive={isActive}
-                  onClick={() => navigate(item.path)}
+                  tooltip={collapsed ? item.title : undefined}
+                  isActive={active}
+                  onClick={() => handleNavigate(item.path)}
                   className={cn(
-                    "h-12 w-full rounded-xl px-4 text-sm font-medium transition-all duration-300",
-                    isActive
+                    "w-full rounded-xl transition-all duration-300",
+                    collapsed
+                      ? "h-12 px-0 justify-center"
+                      : "h-12 px-4 justify-start",
+                    active
                       ? "bg-black text-white shadow-md"
-                      : "text-black/60 hover:bg-[#F8F8F8] hover:text-black",
+                      : "text-black/65 hover:bg-[#F8F8F8] hover:text-black",
                   )}
                 >
-                  <div
-                    className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                      isActive ? "bg-white/20" : "bg-black/5",
-                    )}
-                  >
-                    <item.icon
-                      className="h-4.5 w-4.5"
-                      strokeWidth={isActive ? 2.8 : 2.3}
-                    />
-                  </div>
+                  <item.icon
+                    className="h-5 w-5 shrink-0"
+                    strokeWidth={active ? 2.5 : 2.2}
+                  />
 
-                  {isExpanded && (
-                    <span className="ml-3 truncate font-semibold tracking-wide">
+                  {!collapsed && (
+                    <span className="ml-3 truncate text-sm font-medium">
                       {item.title}
                     </span>
                   )}
@@ -148,18 +155,21 @@ export default function AdminSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      {/* Logout Footer */}
-      <SidebarFooter className="mt-auto border-t border-[#EAEAEA] p-4">
+      {/* FOOTER */}
+      <SidebarFooter className="mt-auto border-t border-[#EAEAEA] p-3">
         <SidebarMenuButton
-          tooltip="Logout"
+          tooltip={collapsed ? "Logout" : undefined}
           onClick={handleLogout}
-          className="h-12 w-full rounded-xl border border-red-500/10 bg-red-50 px-4 text-sm font-bold tracking-wide text-red-600 transition-all hover:bg-red-100 hover:text-red-700"
+          className={cn(
+            "w-full rounded-xl border border-red-500/10 bg-red-50 text-red-600 transition-all duration-300 hover:bg-red-100",
+            collapsed ? "h-12 px-0 justify-center" : "h-12 px-4 justify-start",
+          )}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-            <LogOut className="h-4.5 w-4.5" strokeWidth={2.5} />
-          </div>
+          <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.4} />
 
-          {isExpanded && <span className="ml-3">LogOut</span>}
+          {!collapsed && (
+            <span className="ml-3 text-sm font-semibold">LogOut</span>
+          )}
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>

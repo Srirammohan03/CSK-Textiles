@@ -15,8 +15,15 @@ import {
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getImageUrl } from "@/api/config";
 
-type OutfitType = "Suit" | "Shirt" | "Wedding outfit";
+type OutfitType = "Suit" | "Shirt" | "Wedding_outfit";
 
 type FabricItem = {
   id?: string;
@@ -25,8 +32,6 @@ type FabricItem = {
   name: string;
   family: string;
   subLabel: string;
-  defaultColor: string;
-  colors: string[];
   pattern?: string;
   premium?: boolean;
   lightweight?: boolean;
@@ -35,7 +40,7 @@ type FabricItem = {
 
 const API = import.meta.env.VITE_API_BASE_URL;
 
-const tabs: OutfitType[] = ["Suit", "Shirt", "Wedding outfit"];
+const tabs: OutfitType[] = ["Suit", "Shirt", "Wedding_outfit"];
 
 const initialForm = {
   id: "",
@@ -43,8 +48,6 @@ const initialForm = {
   name: "",
   family: "",
   subLabel: "",
-  defaultColor: "#111827",
-  colors: "",
   pattern: "solid",
   premium: false,
   lightweight: false,
@@ -63,7 +66,7 @@ const AdminFabrics = () => {
     queryKey: ["admin-fabrics"],
     queryFn: async () => {
       const res = await axios.get(`${API}/customize`);
-      return res.data.data || [];
+      return res.data.customizes || [];
     },
   });
 
@@ -102,10 +105,18 @@ const AdminFabrics = () => {
   };
 
   const createPayload = async () => {
-    let imageUrl = "";
+    let imageUrl = form.textureImage as any;
 
-    if (form.textureImage) {
+    if (form.textureImage instanceof File) {
       imageUrl = await uploadImage(form.textureImage);
+    }
+
+    if (!form.textureImage && form.id) {
+      const oldItem = fabrics.find(
+        (item) => String(item.id || item._id) === String(form.id),
+      );
+
+      imageUrl = oldItem?.textureImage || "";
     }
 
     return {
@@ -113,11 +124,6 @@ const AdminFabrics = () => {
       name: form.name,
       family: form.family,
       subLabel: form.subLabel,
-      defaultColor: form.defaultColor,
-      colors: form.colors
-        .split(",")
-        .map((c) => c.trim())
-        .filter(Boolean),
       pattern: form.pattern,
       premium: form.premium,
       lightweight: form.lightweight,
@@ -153,7 +159,7 @@ const AdminFabrics = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return axios.delete(`${API}/customize/${id}`);
+      return axios.delete(`${API}/customize/delete/${id}`);
     },
     onSuccess: () => {
       toast.success("Fabric deleted");
@@ -184,12 +190,10 @@ const AdminFabrics = () => {
       name: item.name,
       family: item.family,
       subLabel: item.subLabel,
-      defaultColor: item.defaultColor,
-      colors: item.colors?.join(", ") || "",
       pattern: item.pattern || "solid",
       premium: !!item.premium,
       lightweight: !!item.lightweight,
-      textureImage: null,
+      textureImage: item.textureImage as any,
     });
 
     setOpenForm(true);
@@ -233,7 +237,7 @@ const AdminFabrics = () => {
           >
             {tab === "Suit" && <Briefcase className="w-4 h-4" />}
             {tab === "Shirt" && <Shirt className="w-4 h-4" />}
-            {tab === "Wedding outfit" && <Gem className="w-4 h-4" />}
+            {tab === "Wedding_outfit" && <Gem className="w-4 h-4" />}
             {tab}
           </button>
         ))}
@@ -251,123 +255,138 @@ const AdminFabrics = () => {
         </div>
       </div>
 
-      {openForm && (
-        <div className="bg-white rounded-2xl border border-[#EAEAEA] p-6 mb-6">
-          <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
-            <input
-              placeholder="Fabric Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="h-11 px-4 rounded-xl border border-[#E5E7EB]"
-            />
+      <Dialog open={openForm} onOpenChange={setOpenForm}>
+        <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden">
+          <div className="p-6">
+            <DialogHeader className="mb-5">
+              <DialogTitle className="text-xl font-semibold">
+                {form.id ? "Update Fabric" : "Add Fabric"}
+              </DialogTitle>
+            </DialogHeader>
 
-            <input
-              placeholder="Family"
-              value={form.family}
-              onChange={(e) => setForm({ ...form, family: e.target.value })}
-              className="h-11 px-4 rounded-xl border border-[#E5E7EB]"
-            />
-
-            <input
-              placeholder="Sub Label"
-              value={form.subLabel}
-              onChange={(e) => setForm({ ...form, subLabel: e.target.value })}
-              className="h-11 px-4 rounded-xl border border-[#E5E7EB]"
-            />
-
-            <input
-              placeholder="Colors comma separated"
-              value={form.colors}
-              onChange={(e) => setForm({ ...form, colors: e.target.value })}
-              className="h-11 px-4 rounded-xl border border-[#E5E7EB]"
-            />
-
-            <input
-              placeholder="Pattern"
-              value={form.pattern}
-              onChange={(e) => setForm({ ...form, pattern: e.target.value })}
-              className="h-11 px-4 rounded-xl border border-[#E5E7EB]"
-            />
-
-            <input
-              type="color"
-              value={form.defaultColor}
-              onChange={(e) =>
-                setForm({ ...form, defaultColor: e.target.value })
-              }
-              className="h-11 px-2 rounded-xl border border-[#E5E7EB]"
-            />
-
-            <label className="h-11 px-4 rounded-xl border border-[#E5E7EB] flex items-center gap-3 cursor-pointer">
-              <ImageIcon className="w-4 h-4" />
-              <span className="text-sm truncate">
-                {form.textureImage
-                  ? form.textureImage.name
-                  : "Upload Fabric Image"}
-              </span>
+            <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
+              <input
+                placeholder="Fabric Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
+              />
 
               <input
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    textureImage: e.target.files?.[0] || null,
-                  })
-                }
+                placeholder="Family"
+                value={form.family}
+                onChange={(e) => setForm({ ...form, family: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
               />
-            </label>
 
-            <label className="flex items-center gap-2 text-sm">
               <input
-                type="checkbox"
-                checked={form.premium}
-                onChange={(e) =>
-                  setForm({ ...form, premium: e.target.checked })
-                }
+                placeholder="Sub Label"
+                value={form.subLabel}
+                onChange={(e) => setForm({ ...form, subLabel: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
               />
-              Premium
-            </label>
 
-            <label className="flex items-center gap-2 text-sm">
               <input
-                type="checkbox"
-                checked={form.lightweight}
-                onChange={(e) =>
-                  setForm({ ...form, lightweight: e.target.checked })
-                }
+                placeholder="Pattern"
+                value={form.pattern}
+                onChange={(e) => setForm({ ...form, pattern: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
               />
-              Lightweight
-            </label>
 
-            <div className="md:col-span-2 flex gap-3 pt-2">
-              <Button
-                type="submit"
-                className="h-11 px-6 rounded-xl bg-black text-white"
-                disabled={addMutation.isPending || updateMutation.isPending}
-              >
-                {addMutation.isPending || updateMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : form.id ? (
-                  "Update Fabric"
-                ) : (
-                  "Add Fabric"
+              <div className="md:col-span-2 space-y-3">
+                <label className="h-11 px-4 rounded-xl border flex items-center gap-3 cursor-pointer w-full">
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="text-sm truncate">
+                    {form.textureImage instanceof File
+                      ? form.textureImage.name
+                      : form.textureImage
+                        ? "Current Image"
+                        : "Upload Fabric Image"}
+                  </span>
+
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        textureImage: e.target.files?.[0] || null,
+                      })
+                    }
+                  />
+                </label>
+                {form.textureImage && (
+                  <div className="md:col-span-2">
+                    <img
+                      src={
+                        form.textureImage instanceof File
+                          ? URL.createObjectURL(form.textureImage)
+                          : getImageUrl(form.textureImage as string)
+                      }
+                      alt="Preview"
+                      className="w-28 h-28 rounded-xl object-cover border"
+                    />
+                  </div>
                 )}
-              </Button>
+              </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetForm}
-                className="h-11 px-6 rounded-xl"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.premium}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      premium: e.target.checked,
+                    })
+                  }
+                />
+                Premium
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.lightweight}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      lightweight: e.target.checked,
+                    })
+                  }
+                />
+                Lightweight
+              </label>
+
+              <div className="md:col-span-2 flex gap-3 pt-3">
+                <Button
+                  type="submit"
+                  className="bg-black text-white rounded-xl h-11 px-6"
+                  disabled={addMutation.isPending || updateMutation.isPending}
+                >
+                  {addMutation.isPending || updateMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : form.id ? (
+                    "Update Fabric"
+                  ) : (
+                    "Add Fabric"
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="rounded-xl h-11 px-6"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden">
         <div className="overflow-x-auto">
@@ -379,7 +398,6 @@ const AdminFabrics = () => {
                 <th className="px-4 py-3 text-xs">Family</th>
                 <th className="px-4 py-3 text-xs">Sub Label</th>
                 <th className="px-4 py-3 text-xs">Pattern</th>
-                <th className="px-4 py-3 text-xs">Color</th>
                 <th className="px-4 py-3 text-xs">Actions</th>
               </tr>
             </thead>
@@ -408,7 +426,7 @@ const AdminFabrics = () => {
                     >
                       <td className="px-4 py-3">
                         <img
-                          src={`${API}${item.textureImage}`}
+                          src={getImageUrl(item.textureImage)}
                           alt={item.name}
                           className="w-12 h-12 rounded-lg object-cover border"
                         />
@@ -418,13 +436,6 @@ const AdminFabrics = () => {
                       <td className="px-4 py-3 text-sm">{item.family}</td>
                       <td className="px-4 py-3 text-sm">{item.subLabel}</td>
                       <td className="px-4 py-3 text-sm">{item.pattern}</td>
-
-                      <td className="px-4 py-3">
-                        <div
-                          className="w-8 h-8 rounded-full border"
-                          style={{ background: item.defaultColor }}
-                        />
-                      </td>
 
                       <td className="px-4 py-3">
                         <div className="flex gap-2">

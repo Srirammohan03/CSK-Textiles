@@ -325,7 +325,7 @@ const ProductDetails = () => {
                           ? "Suit"
                           : product.category === "shirting"
                             ? "Shirt"
-                            : "Wedding outfit";
+                            : "Wedding_outfit";
                       navigate("/customize", { state: { outfit: outfitType } });
                     }}
                     className="w-full h-14 rounded-2xl border-primary text-primary hover:bg-primary hover:text-white font-bold uppercase tracking-[0.1em] text-[11px] shadow-sm transition-all hover:shadow-lg"

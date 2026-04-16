@@ -2,13 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2,
   Search,
-  Filter,
-  RotateCcw,
-  Shirt,
   Sparkles,
   Layers3,
   ArrowRightLeft,
@@ -17,7 +11,6 @@ import {
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import {
-  customizeMaterials,
   outfitOptions,
   viewOptions,
   outfitImageAssets,
@@ -31,10 +24,18 @@ import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import suitingBanner from "@/assets/suiting.jpg";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useCustomizeShirtMaterials } from "@/data/customizeShirtMaterials";
+import { useCustomizeSuitMaterials } from "@/data/customizeSuitMaterials";
+import { useCustomizeWeddingMaterials } from "@/data/customizeWeddingMaterials";
+import { getImageUrl } from "@/api/config";
 
 const Customize = () => {
   const location = useLocation();
   const passedOutfit = location.state?.outfit as OutfitType | undefined;
+
+  const [customizeMaterials, setCustomizeMaterials] = useState<MaterialItem[]>(
+    [],
+  );
 
   const [selectedOutfit, setSelectedOutfit] = useState<OutfitType>(
     passedOutfit || "Suit",
@@ -44,7 +45,7 @@ const Customize = () => {
   const [selectedView, setSelectedView] = useState<ViewType>("front");
   const [selectedShirtVariation, setSelectedShirtVariation] =
     useState<ShirtVariation>("Shirt (Full Hands)");
-  const [zoom, setZoom] = useState(1);
+
   const [search, setSearch] = useState("");
   const GOOGLE_SCRIPT_URL_2 =
     "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
@@ -58,9 +59,28 @@ const Customize = () => {
 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const { data: shirts, isLoading: shirtLoad } = useCustomizeShirtMaterials();
+  const { data: suits, isLoading: suitLoad } = useCustomizeSuitMaterials();
+  const { data: wedding, isLoading: weddingLoad } =
+    useCustomizeWeddingMaterials();
+
+  useEffect(() => {
+    if (shirtLoad || suitLoad || weddingLoad) return;
+
+    setCustomizeMaterials([
+      ...(suits || []),
+      ...(shirts || []),
+      ...(wedding || []),
+    ]);
+  }, [shirts, suits, wedding, shirtLoad, suitLoad, weddingLoad]);
+
+  console.log(customizeMaterials);
+
   const filteredMaterials = useMemo(() => {
     return customizeMaterials.filter((item) => {
       const matchOutfit = item.outfit === selectedOutfit;
+
       const matchSearch =
         search.trim() === ""
           ? true
@@ -70,24 +90,34 @@ const Customize = () => {
 
       return matchOutfit && matchSearch;
     });
-  }, [selectedOutfit, search]);
-
+  }, [customizeMaterials, selectedOutfit, search]);
   const selectedMaterial = useMemo(() => {
     return (
       customizeMaterials.find((item) => item.id === selectedMaterialId) ||
       filteredMaterials[0] ||
-      customizeMaterials[0]
+      customizeMaterials[0] ||
+      null
     );
-  }, [selectedMaterialId, filteredMaterials]);
+  }, [customizeMaterials, selectedMaterialId, filteredMaterials]);
 
   useEffect(() => {
     const first = customizeMaterials.find(
       (item) => item.outfit === selectedOutfit,
     );
+
     if (first) {
       setSelectedMaterialId(first.id);
     }
-  }, [selectedOutfit]);
+  }, [customizeMaterials, selectedOutfit]);
+
+  if (shirtLoad || suitLoad || weddingLoad) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  }
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -95,167 +125,6 @@ const Customize = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-  };
-  const renderSwatchBackground = (item: MaterialItem) => {
-    const base = item.defaultColor;
-
-    switch (item.pattern) {
-      case "stripe":
-        return {
-          background: `
-            repeating-linear-gradient(
-              90deg,
-              ${base} 0px,
-              ${base} 14px,
-              rgba(255,255,255,0.20) 14px,
-              rgba(255,255,255,0.20) 16px
-            )
-          `,
-        };
-
-      case "check":
-        return {
-          background: `
-            linear-gradient(90deg, rgba(255,255,255,0.20) 2px, transparent 2px),
-            linear-gradient(rgba(255,255,255,0.20) 2px, transparent 2px),
-            ${base}
-          `,
-          backgroundSize: "26px 26px, 26px 26px, auto",
-        };
-
-      case "grid":
-        return {
-          background: `
-            linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
-            linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
-            ${base}
-          `,
-          backgroundSize: "14px 14px, 14px 14px, auto",
-        };
-
-      case "linen":
-        return {
-          background: `
-            repeating-linear-gradient(
-              0deg,
-              rgba(255,255,255,0.07) 0px,
-              rgba(255,255,255,0.07) 1px,
-              transparent 1px,
-              transparent 8px
-            ),
-            repeating-linear-gradient(
-              90deg,
-              rgba(0,0,0,0.05) 0px,
-              rgba(0,0,0,0.05) 1px,
-              transparent 1px,
-              transparent 8px
-            ),
-            ${base}
-          `,
-        };
-
-      case "jacquard":
-        return {
-          background: `
-            radial-gradient(circle at 25% 25%, rgba(255,255,255,0.18) 0 8%, transparent 9%),
-            radial-gradient(circle at 75% 75%, rgba(0,0,0,0.08) 0 8%, transparent 9%),
-            ${base}
-          `,
-          backgroundSize: "24px 24px",
-        };
-
-      case "sheen":
-        return {
-          background: `
-            linear-gradient(
-              135deg,
-              rgba(255,255,255,0.25),
-              transparent 35%,
-              rgba(255,255,255,0.10) 60%,
-              transparent
-            ),
-            ${base}
-          `,
-        };
-
-      case "solid":
-      default:
-        return { background: base };
-    }
-  };
-
-  const getTextureBackground = (
-    pattern: MaterialItem["pattern"],
-    color: string,
-  ) => {
-    switch (pattern) {
-      case "stripe":
-        return `
-          repeating-linear-gradient(
-            90deg,
-            ${color} 0px,
-            ${color} 14px,
-            rgba(255,255,255,0.22) 14px,
-            rgba(255,255,255,0.22) 16px
-          )
-        `;
-
-      case "check":
-        return `
-          linear-gradient(90deg, rgba(255,255,255,0.18) 2px, transparent 2px),
-          linear-gradient(rgba(255,255,255,0.18) 2px, transparent 2px),
-          ${color}
-        `;
-
-      case "grid":
-        return `
-          linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
-          linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
-          ${color}
-        `;
-
-      case "linen":
-        return `
-          repeating-linear-gradient(
-            0deg,
-            rgba(255,255,255,0.08) 0px,
-            rgba(255,255,255,0.08) 1px,
-            transparent 1px,
-            transparent 8px
-          ),
-          repeating-linear-gradient(
-            90deg,
-            rgba(0,0,0,0.05) 0px,
-            rgba(0,0,0,0.05) 1px,
-            transparent 1px,
-            transparent 8px
-          ),
-          ${color}
-        `;
-
-      case "jacquard":
-        return `
-          radial-gradient(circle at 25% 25%, rgba(255,255,255,0.18) 0 8%, transparent 9%),
-          radial-gradient(circle at 75% 75%, rgba(0,0,0,0.08) 0 8%, transparent 9%),
-          ${color}
-        `;
-
-      case "sheen":
-        return `
-          linear-gradient(
-            135deg,
-            rgba(255,255,255,0.28),
-            transparent 35%,
-            rgba(255,255,255,0.10) 60%,
-            transparent
-          ),
-          ${color}
-        `;
-
-      case "solid":
-      default:
-        return color;
-    }
   };
 
   const getCurrentAssets = () => {
@@ -305,7 +174,7 @@ const Customize = () => {
               className="absolute inset-0"
               style={{
                 backgroundImage: selectedMaterial?.textureImage
-                  ? `url(${selectedMaterial.textureImage})`
+                  ? `url(${getImageUrl(selectedMaterial.textureImage)})`
                   : undefined,
 
                 backgroundSize: "100px",
@@ -370,6 +239,7 @@ const Customize = () => {
     const nextIndex = (currentIndex + 1) % viewOptions.length;
     setSelectedView(viewOptions[nextIndex]);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -432,6 +302,7 @@ const Customize = () => {
       setLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen bg-white text-[#111827]">
       <Header />
@@ -556,7 +427,7 @@ const Customize = () => {
                       className="mb-3 h-24 w-full rounded-xl"
                       style={{
                         backgroundImage: item.textureImage
-                          ? `url(${item.textureImage})`
+                          ? `url(${getImageUrl(item.textureImage)})`
                           : undefined,
                         backgroundSize: "cover",
                         backgroundRepeat: "no-repeat",
@@ -612,7 +483,6 @@ const Customize = () => {
                       exit={{ opacity: 0, scale: 1.02, y: -10 }}
                       transition={{ duration: 0.35, ease: "easeOut" }}
                       className="absolute inset-0"
-                      style={{ transform: `scale(${zoom})` }}
                     >
                       <RealImagePreview />
                     </motion.div>
@@ -632,7 +502,7 @@ const Customize = () => {
               <h3 className="mt-3 text-4xl font-light leading-tight text-[#111827]">
                 Custom
                 <br />
-                {selectedOutfit === "Wedding outfit"
+                {selectedOutfit === "Wedding_outfit"
                   ? "Wedding Wear"
                   : selectedOutfit}
               </h3>
