@@ -10,11 +10,17 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-[100dvh] w-full overflow-hidden bg-[#FAFAFA] font-body selection:bg-black selection:text-white">
+      <div className="flex h-[100dvh] w-full  bg-[#FAFAFA]">
+        {/* Sidebar */}
         <AdminSidebar />
-        <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-transparent">
+
+        {/* Main Area */}
+        <SidebarInset className="flex flex-1 flex-col  min-w-0">
+          {/* Header - Fixed at top */}
           <AdminHeader />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent md:p-10 p-6">
+
+          {/* Scrollable Content */}
+          <main className="flex-1 overflow-y-auto bg-white p-6 md:p-8 lg:p-10">
             {children}
           </main>
         </SidebarInset>

@@ -1,11 +1,5 @@
-import { useLayoutEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Card, CardContent } from "@/components/ui/card";
-import { Scissors, Users, TrendingUp, Award, Clock, Shirt } from "lucide-react";
-import { useMediaQuery } from "react-responsive";
-
-gsap.registerPlugin(ScrollTrigger);
+import { Card, CardContent } from "./ui/card";
+import { Scissors, Shirt, Users, Award, Clock, TrendingUp } from "lucide-react";
 
 const services = [
   {
@@ -46,160 +40,62 @@ const services = [
 ];
 
 const ServicesGrid = () => {
-  const containerRef = useRef(null);
-  const bgRef = useRef(null);
-  const wordOurRef = useRef(null);
-  const wordServicesRef = useRef(null);
-  const cardsRef = useRef(null);
-  const introRef = useRef(null);
-
-  const isMobile = useMediaQuery({ maxWidth: 767 });
-
-  useLayoutEffect(() => {
-    if (isMobile) return;
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "+=3000",
-          scrub: 0.5,
-          pin: true,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      tl.fromTo(
-        introRef.current,
-        { scale: 0.5, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 1 },
-      );
-
-      tl.to(
-        wordOurRef.current,
-        { x: "-100%", opacity: 0, duration: 2 },
-        "split",
-      );
-      tl.to(
-        wordServicesRef.current,
-        { x: "100%", opacity: 0, duration: 2 },
-        "split",
-      );
-
-      tl.fromTo(
-        bgRef.current,
-        { scale: 0, opacity: 0, borderRadius: "100%" },
-        {
-          scale: 1,
-          opacity: 1,
-          borderRadius: "0%",
-          duration: 2,
-          ease: "none",
-        },
-        "split",
-      );
-
-      tl.fromTo(
-        cardsRef.current.children,
-        { y: 200, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.1, duration: 2, ease: "none" },
-        "split+=0.8",
-      );
-    });
-
-    return () => ctx.revert();
-  }, [isMobile]);
-
-  // ================= MOBILE LAYOUT =================
-  if (isMobile) {
-    return (
-      <section className="py-16 px-6 bg-background">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-display font-bold mb-3">
-              Our Services
-            </h2>
-            <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-              From bespoke tailoring to expert consultations, we provide a
-              complete textile experience.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {services.map((service, index) => {
-              const Icon = service.icon;
-              return (
-                <Card
-                  key={index}
-                  className="bg-background border-border/50 shadow-lg"
-                >
-                  <CardContent className="p-4">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 mb-3">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <h3 className="font-display font-semibold text-sm text-foreground mb-1">
-                      {service.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {service.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // ================= DESKTOP LAYOUT (UNCHANGED) =================
   return (
-    <section
-      ref={containerRef}
-      className="relative h-screen w-full overflow-hidden bg-background"
-    >
-      <div
-        ref={bgRef}
-        className="absolute inset-0 z-0 bg-cover bg-center origin-center"
+    <section className="relative md:py-20 py-10">
+      {/* Background Image */}
+      {/* <div
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: 'url("/images/2151914997.jpg")' }}
-      />
+      /> */}
 
-      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-        <h2
-          ref={introRef}
-          className="text-6xl md:text-9xl font-display font-bold text-foreground flex gap-8"
-        >
-          <span ref={wordOurRef} className="inline-block">
-            Our
-          </span>
-          <span ref={wordServicesRef} className="inline-block">
-            Services
-          </span>
-        </h2>
-      </div>
+      {/* Dark Overlay */}
+      {/* <div className="absolute inset-0 bg-black/50" /> */}
 
-      <div className="relative z-30 container mx-auto px-4 h-full flex flex-col justify-center">
-        <div
-          ref={cardsRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
-        >
+      {/* Content */}
+      <div className="relative z-10 max-w-7xl mx-auto">
+        {/* Heading */}
+        <div className="text-center mb-14">
+          <h2
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            className="text-4xl md:text-6xl font-bold text-black mb-4"
+          >
+            Our Services
+          </h2>
+          <p
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-delay="100"
+            className="text-black/80 max-w-2xl mx-auto text-sm md:text-base"
+          >
+            Premium tailoring solutions crafted with precision, elegance, and
+            years of trusted expertise.
+          </p>
+        </div>
+
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service, index) => {
             const Icon = service.icon;
+
             return (
               <Card
+                data-aos="fade-up"
+                data-aos-duration="1000"
+                data-aos-delay={index * 100}
                 key={index}
-                className="bg-background border-border/50 shadow-2xl"
+                className="bg-white/95 backdrop-blur-md border-0 shadow-xl rounded-2xl"
               >
                 <CardContent className="p-6">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="font-display font-semibold text-lg text-foreground mb-2">
+
+                  <h3 className="text-xl font-semibold mb-2">
                     {service.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+
+                  <p className="text-sm text-gray-700 leading-relaxed">
                     {service.description}
                   </p>
                 </CardContent>

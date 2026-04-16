@@ -63,7 +63,7 @@ const AboutPreview = () => {
           <motion.p
             variants={fadeUp}
             custom={1}
-            className="text-muted-foreground mt-4 max-w-xl mx-auto text-base md:text-lg"
+            className="text-gray-700 mt-4 max-w-xl mx-auto text-base md:text-lg"
           >
             Trusted by Hyderabad's discerning men for over two decades
           </motion.p>
@@ -90,7 +90,7 @@ const AboutPreview = () => {
                   </h3>
                 </div>
 
-                <p className="text-base md:text-xl text-muted-foreground mb-4">
+                <p className="text-base md:text-xl text-gray-700 mb-4">
                   {item.description}
                 </p>
 
@@ -139,7 +139,7 @@ const AboutPreview = () => {
                   </h3>
                 </div>
 
-                <p className="text-base md:text-xl text-muted-foreground mb-4">
+                <p className="text-base md:text-xl text-gray-700 mb-4">
                   {item.description}
                 </p>
 

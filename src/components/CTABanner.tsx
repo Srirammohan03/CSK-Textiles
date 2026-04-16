@@ -4,10 +4,10 @@ import { Calendar } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
-import weddingHero from "@/assets/wedding-sherwani.jpg";
-import categoryWedding from "/images/hl2.jpg";
-import weddingHero2 from "/images/hl3.jpg";
-import categoryWedding2 from "@/assets/category-wedding.jpg";
+import weddingHero from "/images/1.jpeg";
+import categoryWedding from "/images/cta3.webp";
+import weddingHero2 from "/images/3.png";
+import categoryWedding2 from "/images/cta4.webp";
 
 const CTABanner = () => {
   const targetRef = useRef<HTMLDivElement | null>(null);
@@ -42,7 +42,7 @@ const CTABanner = () => {
               >
                 <div className="h-[390px] w-[240px] overflow-hidden rounded-2xl border border-black/5 bg-gray-100 shadow-xl">
                   <img
-                    src={weddingHero2}
+                    src={weddingHero}
                     alt="Groom Style Left Back"
                     className="h-full w-full object-cover"
                   />
@@ -62,7 +62,7 @@ const CTABanner = () => {
               >
                 <div className="h-[390px] w-[240px] overflow-hidden rounded-2xl border border-black/5 bg-gray-100 shadow-2xl">
                   <img
-                    src={weddingHero}
+                    src={weddingHero2}
                     alt="Groom Style Left Front"
                     className="h-full w-full object-cover"
                   />
@@ -87,7 +87,7 @@ const CTABanner = () => {
               GROOM <span className="block text-yellow-500">STYLING</span>
             </h2>
 
-            <p className="mx-auto mb-8 max-w-xs text-sm font-light leading-relaxed text-gray-700 sm:max-w-md sm:text-base md:mb-10 md:text-lg">
+            <p className="mx-auto mb-8 max-w-xs text-sm font-light leading-relaxed text-black sm:max-w-md sm:text-base md:mb-10 md:text-lg">
               Planning a wedding? Visit us for personalized fabric selection and
               expert styling advice for your special day.
             </p>
