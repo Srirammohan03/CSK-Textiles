@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
 
@@ -10,17 +11,17 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-[100dvh] w-full bg-[#FAFAFA]">
+      <div className="flex min-h-screen w-full bg-[#FAFAFA]">
         {/* Sidebar */}
         <AdminSidebar />
 
         {/* Main Area */}
-        <SidebarInset className="flex flex-1 flex-col min-w-0">
-          {/* Header - Fixed at top */}
+        <SidebarInset className="flex min-w-0 flex-1 flex-col">
+          {/* Header */}
           <AdminHeader />
 
-          {/* Scrollable Content */}
-          <main className="flex-1 overflow-y-auto bg-white p-6 md:p-8 lg:p-10">
+          {/* Content */}
+          <main className="flex-1 overflow-y-auto bg-white p-4 md:p-6 lg:p-8">
             {children}
           </main>
         </SidebarInset>

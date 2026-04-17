@@ -17,6 +17,7 @@ import {
   Phone,
   Clock,
   MessageSquare,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -24,13 +25,24 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { cn } from "@/lib/utils";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 const AdminEnquiries = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [enquiries, setEnquiries] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [enquiries, setEnquiries] = useState<any[]>([]);
+  // const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("All");
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const query = useQueryClient();
 
   const token = localStorage.getItem("admin_token");
   const API_URL =
@@ -52,55 +64,86 @@ const AdminEnquiries = () => {
       return;
     }
 
-    const fetchEnquiries = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch(`${API_URL}/inquiries`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+    // const fetchEnquiries = async () => {
+    //   try {
+    //     setIsLoading(true);
+    //     const res = await fetch(`${API_URL}/inquiries`, {
+    //       headers: { Authorization: `Bearer ${token}` },
+    //     });
+    //     const data = await res.json();
 
-        if (Array.isArray(data)) {
-          setEnquiries(data);
-        } else {
-          setEnquiries([]);
-          console.error("Inquiries data is not an array:", data);
-        }
-      } catch (error) {
-        toast.error("Failed to fetch enquiries");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    //     if (Array.isArray(data)) {
+    //       setEnquiries(data);
+    //     } else {
+    //       setEnquiries([]);
+    //       console.error("Inquiries data is not an array:", data);
+    //     }
+    //   } catch (error) {
+    //     toast.error("Failed to fetch enquiries");
+    //   } finally {
+    //     setIsLoading(false);
+    //   }
+    // };
 
-    fetchEnquiries();
+    // fetchEnquiries();
   }, [navigate, token, API_URL]);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Remove this enquiry record?")) return;
+  const { data: enquiries = [], isLoading } = useQuery({
+    queryKey: ["enquiries", search],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_URL}/inquiries?search=${encodeURIComponent(search)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      const data = await res.json();
+      return data || [];
+    },
+    placeholderData: keepPreviousData,
+  });
 
-    try {
-      const res = await fetch(`${API_URL}/inquiries/${id}`, {
+  const handleDelete = async (id: number) => {
+    if (!id) return;
+    setDeleteId(id);
+    setDeleteOpen(true);
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!deleteId) return;
+      const res = await fetch(`${API_URL}/inquiries/${deleteId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (res.ok) {
-        setEnquiries(enquiries.filter((e) => e.id !== id));
-        toast.success("Enquiry removed successfully");
-      } else {
-        toast.error("Failed to remove enquiry");
-      }
-    } catch (error) {
-      toast.error("Error removing enquiry");
-    }
-  };
+      return res.json();
+    },
+    onSuccess: () => {
+      query.invalidateQueries({ queryKey: ["enquiries"] });
+      toast.success("Enquiry removed successfully");
+      setDeleteOpen(false);
+      setDeleteId(null);
+    },
+    onError: () => {
+      toast.error("Failed to remove enquiry");
+      setDeleteOpen(false);
+      setDeleteId(null);
+    },
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
     toast.success("Logged out successfully");
     navigate("/admin/login");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-6 w-6" />
+      </div>
+    );
+  }
 
   const filteredEnquiries = enquiries.filter((e) => {
     if (activeTab === "All") return true;
@@ -137,6 +180,18 @@ const AdminEnquiries = () => {
             {cat}
           </button>
         ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#EAEAEA] p-4 mb-6">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search fabrics..."
+            className="w-full h-11 rounded-xl border border-[#E5E7EB] pl-11 pr-4 outline-none"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -255,6 +310,14 @@ const AdminEnquiries = () => {
           </div>
         )}
       </div>
+
+      <DeleteConfirmDialog
+        title="Delete Enquiry?"
+        description="This action cannot be undone."
+        onConfirm={() => deleteMutation.mutate()}
+        onOpenChange={setDeleteOpen}
+        open={deleteOpen}
+      />
     </AdminLayout>
   );
 };
