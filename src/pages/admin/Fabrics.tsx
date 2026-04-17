@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getImageUrl } from "@/api/config";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 type OutfitType = "Suit" | "Shirt" | "Wedding_outfit";
 
@@ -61,6 +62,8 @@ const AdminFabrics = () => {
   const [search, setSearch] = useState("");
   const [openForm, setOpenForm] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data: fabrics = [], isLoading } = useQuery<FabricItem[]>({
     queryKey: ["admin-fabrics"],
@@ -158,12 +161,15 @@ const AdminFabrics = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return axios.delete(`${API}/customize/delete/${id}`);
+    mutationFn: async () => {
+      if (!deleteId) return;
+      return axios.delete(`${API}/customize/delete/${deleteId}`);
     },
     onSuccess: () => {
       toast.success("Fabric deleted");
       queryClient.invalidateQueries({ queryKey: ["admin-fabrics"] });
+      setDeleteId(null);
+      setDeleteOpen(false);
     },
     onError: () => toast.error("Failed to delete"),
   });
@@ -181,6 +187,11 @@ const AdminFabrics = () => {
     } else {
       addMutation.mutate();
     }
+  };
+
+  const handleDelete = (id) => {
+    setDeleteId(id);
+    setDeleteOpen(true);
   };
 
   const handleEdit = (item: FabricItem) => {
@@ -316,6 +327,10 @@ const AdminFabrics = () => {
                     }
                   />
                 </label>
+                <p className="text-[12px] text-gray-500 px-1 italic">
+                  * Please upload flat fabric images only; ensure there are no
+                  shadows or folds.
+                </p>
                 {form.textureImage && (
                   <div className="md:col-span-2">
                     <img
@@ -447,7 +462,7 @@ const AdminFabrics = () => {
                           </button>
 
                           <button
-                            onClick={() => deleteMutation.mutate(id)}
+                            onClick={() => handleDelete(id)}
                             className="w-9 h-9 rounded-lg border flex items-center justify-center text-red-500"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -462,6 +477,14 @@ const AdminFabrics = () => {
           </table>
         </div>
       </div>
+
+      <DeleteConfirmDialog
+        title="Delete Fabric?"
+        description="This action cannot be undone."
+        onConfirm={() => deleteMutation.mutate()}
+        onOpenChange={setDeleteOpen}
+        open={deleteOpen}
+      />
     </AdminLayout>
   );
 };

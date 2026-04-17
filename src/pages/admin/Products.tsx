@@ -649,7 +649,7 @@ const AdminProducts = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                    Market Value (₹)
+                    Price (₹)
                   </Label>
 
                   <Input
@@ -666,7 +666,7 @@ const AdminProducts = () => {
 
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-[0.15em] font-semibold text-black/60">
-                    Fabric Quality
+                    Fabric
                   </Label>
 
                   <Input
