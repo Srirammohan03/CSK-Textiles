@@ -1,46 +1,58 @@
-import { Loader2 } from "lucide-react";
 import React from "react";
+import { motion } from "framer-motion";
 
 const Fallback = () => {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-white via-gray-50 to-gray-100">
-      <div className="flex flex-col items-center gap-6">
-        {/* Logo Loader */}
-        <div className="relative flex h-20 w-20 items-center justify-center">
-          {/* Outer Ring */}
-          <div className="absolute h-20 w-20 rounded-full border-4 border-gray-200" />
-
-          {/* Animated Ring */}
-          <div className="absolute h-20 w-20 animate-spin rounded-full border-4 border-black border-t-transparent" />
-
-          {/* Center Logo */}
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-xl font-bold text-white shadow-xl">
+    <div className="flex h-screen w-full items-center justify-center bg-white">
+      <div className="flex flex-col items-center gap-10">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 5 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-black shadow-2xl overflow-hidden"
+        >
+          {/* Shimmer effect inside the logo container */}
+          <motion.div
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="absolute inset-0 z-10 w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+          />
+          <div className="relative z-20 flex h-14 w-14 items-center justify-center bg-black rounded-lg">
             <img
               src="/favicon.ico"
               alt="CSK Tailored Logo"
-              className="h-full w-full object-contain p-1"
+              className="h-full w-full object-contain"
             />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Text */}
-        <div className="text-center">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900">
-            Loading Dashboard
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Preparing your admin workspace...
-          </p>
-        </div>
-
-        {/* Progress Bars */}
-        <div className="w-56 space-y-2">
-          <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-            <div className="h-full w-2/3 animate-pulse rounded-full bg-black" />
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-            <div className="h-full w-1/2 animate-pulse rounded-full bg-gray-400" />
-          </div>
+        <div className="flex flex-col items-center gap-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="text-[10px] font-medium tracking-[0.3em] text-neutral-500 uppercase"
+          >
+            Loading Module
+          </motion.div>
+          
+          {/* Minimalist Animated Loading Bar */}
+          <motion.div 
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: "100px", opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+            className="h-[1px] rounded-full overflow-hidden bg-neutral-200"
+          >
+            <motion.div
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{
+                repeat: Infinity,
+                duration: 1.5,
+                ease: "easeInOut",
+              }}
+              className="h-full w-1/3 bg-black rounded-full"
+            />
+          </motion.div>
         </div>
       </div>
     </div>

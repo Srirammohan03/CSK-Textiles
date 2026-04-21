@@ -60,7 +60,7 @@ function AppRoutes() {
 
   const { isLoading, user } = useAuth();
 
-  if (isLoading) <Fallback />;
+  if (isLoading && isAdminRoute) return <Fallback />;
 
   return (
     <>

@@ -96,7 +96,8 @@ const AdminProducts = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      setSelectedFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+      e.target.value = ""; // Allows the same file to be selected again if needed
     }
   };
 
@@ -432,16 +433,16 @@ const AdminProducts = () => {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md h-[80vh] p-0 gap-0 overflow-hidden rounded-xl border border-[#EAEAEA]">
+        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl border border-[#EAEAEA]">
           {/* Header */}
-          <DialogHeader className="px-8 py-6 border-b border-[#EAEAEA]">
+          <DialogHeader className="px-8 py-6 border-b border-[#EAEAEA] flex-none">
             <DialogTitle className="text-lg font-semibold tracking-tight text-black">
               {mode === "edit" ? "Edit Signature Piece" : "New Signature Piece"}
             </DialogTitle>
           </DialogHeader>
 
           {/* Body */}
-          <div className="max-h-[85vh] overflow-y-auto px-8 py-6">
+          <div className="flex-1 overflow-y-auto px-8 py-6">
             <form onSubmit={handleCreateProduct} className="space-y-6">
               {/* Image Upload */}
 
@@ -469,19 +470,45 @@ const AdminProducts = () => {
                   />
                 </div>
 
-                {/* Preview New Files */}
-                {selectedFiles.length > 0 && (
+                {/* Preview Images */}
+                {(selectedFiles.length > 0 || (mode === "edit" && formData.image?.length > 0)) && (
                   <div className="grid grid-cols-3 gap-3 mt-3">
+                    {/* Existing Images */}
+                    {mode === "edit" &&
+                      formData.image?.map((img, index) => (
+                        <div
+                          key={`existing-${index}`}
+                          className="relative h-24 rounded overflow-hidden border"
+                        >
+                          <img
+                            src={getImageUrl(img)}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                image: prev.image.filter((_, i) => i !== index),
+                              }));
+                            }}
+                            className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-neutral-100 transition-colors"
+                          >
+                            <X className="w-3 h-3 text-black" />
+                          </button>
+                        </div>
+                      ))}
+
+                    {/* New Upload Files */}
                     {selectedFiles.map((file, index) => (
                       <div
-                        key={index}
+                        key={`new-${index}`}
                         className="relative h-24 rounded overflow-hidden border"
                       >
                         <img
                           src={URL.createObjectURL(file)}
                           className="w-full h-full object-cover"
                         />
-
                         <button
                           type="button"
                           onClick={() =>
@@ -489,33 +516,14 @@ const AdminProducts = () => {
                               prev.filter((_, i) => i !== index),
                             )
                           }
-                          className="absolute top-1 right-1 bg-white rounded-full p-1"
+                          className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-neutral-100 transition-colors"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3 h-3 text-black" />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
-
-                {/* Existing Images in Edit */}
-                {selectedFiles.length === 0 &&
-                  mode === "edit" &&
-                  formData.image?.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mt-3">
-                      {formData.image.map((img, index) => (
-                        <div
-                          key={index}
-                          className="h-24 rounded overflow-hidden border"
-                        >
-                          <img
-                            src={getImageUrl(img)}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
               </div>
 
               {/* Name */}
