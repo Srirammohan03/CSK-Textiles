@@ -143,7 +143,7 @@ export default function AdminSidebar() {
                       ? "h-12 px-0 justify-center"
                       : "h-12 px-4 justify-start",
                     active
-                      ? "bg-black text-white shadow-md"
+                      ? "bg-black text-white border-primary border-2 "
                       : "text-black/65 hover:bg-[#F8F8F8] hover:text-black",
                   )}
                 >
@@ -153,7 +153,7 @@ export default function AdminSidebar() {
                   />
 
                   {!collapsed && (
-                    <span className="ml-3 truncate text-sm font-medium">
+                    <span className="ml-3 truncate text-sm font-medium font-sans">
                       {item.title}
                     </span>
                   )}

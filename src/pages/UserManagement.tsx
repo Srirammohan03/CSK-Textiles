@@ -1,9 +1,14 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { set, z } from "zod";
 import {
   Eye,
@@ -82,17 +87,27 @@ const UserManagement = () => {
   const [editUser, setEditUser] = useState<UserType | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["user-management"],
+    queryKey: ["user-management", debouncedSearch],
     queryFn: async () => {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/all-users`,
+        `${import.meta.env.VITE_API_BASE_URL}/auth/all-users?search=${encodeURIComponent(debouncedSearch)}`,
         { withCredentials: true },
       );
       return res.data;
     },
+    placeholderData: keepPreviousData,
   });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   const addForm = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -237,7 +252,7 @@ const UserManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 p-4 md:p-6">
+      <div className="space-y-6 p-4 md:p-6 font-sans">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -256,7 +271,7 @@ const UserManagement = () => {
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-lg font-sans">
               <DialogHeader>
                 <DialogTitle>Add User</DialogTitle>
               </DialogHeader>
@@ -381,6 +396,16 @@ const UserManagement = () => {
         </div>
 
         <Card>
+          <CardContent className="p-2">
+            <Input
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -403,9 +428,9 @@ const UserManagement = () => {
                     </TableCell>
                   </TableRow>
                 ) : users.length > 0 ? (
-                  users.map((user: UserType) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.id}</TableCell>
+                  users.map((user: UserType, idx: number) => (
+                    <TableRow key={user.id || idx}>
+                      <TableCell>{idx + 1}</TableCell>
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell className="capitalize">{user.role}</TableCell>
@@ -521,7 +546,7 @@ const UserManagement = () => {
                 onSubmit={editForm.handleSubmit((values) =>
                   editMutation.mutate(values),
                 )}
-                className="space-y-4"
+                className="space-y-4 font-sans"
               >
                 <FormField
                   control={editForm.control}

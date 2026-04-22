@@ -1,28 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  ShoppingBag,
-  Package,
-  Mail,
-  LogOut,
   Plus,
   Search,
-  Bell,
-  Menu,
   X,
-  ChevronRight,
   Briefcase,
   Users,
   MapPin,
   Clock,
-  ExternalLink,
   Trash2,
   Edit,
-  Eye,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,46 +17,57 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Job, JobApplication } from "@/hooks/useJobs";
+import { Job } from "@/hooks/useJobs";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { getImageUrl } from "@/api/config";
 import axios from "axios";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const AdminCareers = () => {
   const [activeTab, setActiveTab] = useState("opportunities");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [deletingJobId, setDeletingJobId] = useState<number | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const client = useQueryClient();
 
   // Form State for new Job
   const [jobFormData, setJobFormData] = useState({
     title: "",
-    category: "Design",
+    category: "",
     description: "",
     requirements: "",
     package: "",
-    location: "Mumbai, HQ",
-    type: "Full-time",
+    location: "",
+    type: "",
   });
 
   const { data: applications = [], isLoading: isApplicationsLoading } =
     useQuery({
-      queryKey: ["applications"],
+      queryKey: ["applications", debouncedSearch],
       queryFn: async () => {
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/jobs/applications`,
+          `${import.meta.env.VITE_API_BASE_URL}/jobs/applications?search=${encodeURIComponent(debouncedSearch)}`,
           {
             withCredentials: true,
           },
         );
         return data;
       },
+      enabled: activeTab === "submissions",
+      placeholderData: keepPreviousData,
     });
 
   const { data: jobs = [], isLoading: isJobsLoading } = useQuery({
@@ -97,74 +95,110 @@ const AdminCareers = () => {
     };
   }, [isAddModalOpen]);
 
-  const handleCreateJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    try {
-      const url = isEditMode
-        ? `${import.meta.env.VITE_API_BASE_URL}/jobs/${editingJob?.id}`
-        : `${import.meta.env.VITE_API_BASE_URL}/jobs`;
-
-      const method = isEditMode ? "PUT" : "POST";
-
-      const res = await axios.request({
-        method,
-        url,
-        withCredentials: true,
-        data: JSON.stringify(jobFormData),
-      });
-
-      if (res.status === 200 || res.status === 201) {
-        toast.success(
-          isEditMode ? "Job updated successfully" : "Job listing published",
-        );
-
-        setIsAddModalOpen(false);
-        setIsEditMode(false);
-        setEditingJob(null);
-
-        client.invalidateQueries({ queryKey: ["jobs"] });
-
-        setJobFormData({
-          title: "",
-          category: "Design",
-          description: "",
-          requirements: "",
-          package: "",
-          location: "Mumbai, HQ",
-          type: "Full-time",
-        });
-      }
-    } catch (error) {
-      toast.error(
-        isEditMode ? "Failed to update job" : "Failed to publish job",
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/jobs`,
+        jobFormData,
+        {
+          withCredentials: true,
+        },
       );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Job listing published");
 
-  const handleDeleteJob = async (id: number) => {
-    if (
-      !confirm(
-        "Are you sure? This will also remove all candidate submissions for this role.",
-      )
-    )
-      return;
-    try {
-      const res = await axios.delete(
+      setIsAddModalOpen(false);
+      setIsEditMode(false);
+      setEditingJob(null);
+
+      client.invalidateQueries({ queryKey: ["jobs"] });
+
+      setJobFormData({
+        title: "",
+        category: "Design",
+        description: "",
+        requirements: "",
+        package: "",
+        location: "Mumbai, HQ",
+        type: "Full-time",
+      });
+    },
+    onError: () => {
+      toast.error("Failed to publish job");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/jobs/${editingJob?.id}`,
+        jobFormData,
+        {
+          withCredentials: true,
+        },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Job updated successfully");
+      setIsAddModalOpen(false);
+      setIsEditMode(false);
+      setEditingJob(null);
+      client.invalidateQueries({ queryKey: ["jobs"] });
+      setJobFormData({
+        title: "",
+        category: "Design",
+        description: "",
+        requirements: "",
+        package: "",
+        location: "Mumbai, HQ",
+        type: "Full-time",
+      });
+    },
+    onError: () => {
+      toast.error("Failed to update job");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      if (!id) return;
+
+      const { data } = await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/jobs/${id}`,
         {
           withCredentials: true,
         },
       );
-      if (res.status === 200) {
-        toast.success("Job removed from systems");
-        client.invalidateQueries({ queryKey: ["jobs"] });
-      }
-    } catch (error) {
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Job removed from systems");
+      client.invalidateQueries({ queryKey: ["jobs"] });
+      setDeletingJobId(null);
+      setDeleteOpen(false);
+    },
+    onError: () => {
       toast.error("Deletion failed");
+    },
+  });
+
+  const handleCreateJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditMode) {
+      if (!editingJob) return;
+      updateMutation.mutate();
+    } else {
+      createMutation.mutate();
     }
   };
 
@@ -184,9 +218,13 @@ const AdminCareers = () => {
     });
   };
 
+  const isSubmitting = isEditMode
+    ? updateMutation.isPending
+    : createMutation.isPending;
+
   return (
     <AdminLayout>
-      <div className="mb-10 rounded-[32px] border border-[#87CEEB]/20 bg-gradient-to-br from-white via-[#FFF9F0] to-[#F3F4F6] p-6 shadow-[0_20px_60px_rgba(20,112,169,0.08)] md:p-8">
+      <div className="mb-10 rounded-[32px] border border-[#87CEEB]/20 bg-gradient-to-br from-white via-[#FFF9F0] to-[#F3F4F6] p-6 shadow-[0_20px_60px_rgba(20,112,169,0.08)] md:p-8 font-sans">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#87CEEB]/20 bg-[#87CEEB]/10 px-4 py-2 text-[12px] md:text-[14px] font-bold uppercase tracking-[0.25em] text-[#1470A9]">
@@ -233,7 +271,22 @@ const AdminCareers = () => {
 
             {activeTab === "opportunities" && (
               <Button
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={() => {
+                  setIsEditMode(false);
+                  setEditingJob(null);
+
+                  setJobFormData({
+                    title: "",
+                    category: "",
+                    description: "",
+                    requirements: "",
+                    package: "",
+                    location: "",
+                    type: "",
+                  });
+
+                  setIsAddModalOpen(true);
+                }}
                 className="h-12 rounded-2xl bg-gradient-to-r from-[#EF7D05] via-[#1470A9] to-[#5882A5] px-6 text-[14px] md:text-[18px] font-semibold text-white shadow-[0_15px_40px_rgba(20,112,169,0.3)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_50px_rgba(20,112,169,0.4)]"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -307,7 +360,10 @@ const AdminCareers = () => {
                     </div>
                     <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#EAEAEA]">
                       <button
-                        onClick={() => handleDeleteJob(job.id)}
+                        onClick={() => {
+                          setDeletingJobId(job.id);
+                          setDeleteOpen(true);
+                        }}
                         className="p-2 text-black/40 hover:text-[#E33D3D] transition-colors"
                       >
                         <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -348,6 +404,8 @@ const AdminCareers = () => {
                 <Input
                   placeholder="Filter submissions..."
                   className="bg-white border-[#EAEAEA] pl-9 h-9 rounded-md focus:ring-0 focus:border-black transition-all w-full text-xs"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <div className="text-[12px] md:text-[14px] font-bold uppercase tracking-[0.2em] text-black/40">
@@ -364,7 +422,7 @@ const AdminCareers = () => {
                   <tr className="text-[12px] md:text-[14px] uppercase tracking-[0.15em] font-bold text-black/50 border-b border-[#EAEAEA]">
                     <th className="px-6 py-4 font-medium">Candidate</th>
                     <th className="px-6 py-4 font-medium">Target Role</th>
-                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 font-medium">Applied Date</th>
                     <th className="px-6 py-4 text-right font-medium">Resume</th>
                   </tr>
                 </thead>
@@ -407,7 +465,14 @@ const AdminCareers = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className="px-2 py-1 bg-[#F5F5F5] border border-[#EAEAEA] text-black text-[9px] uppercase tracking-[0.1em] font-bold rounded-sm">
-                            {app.status}
+                            {new Date(app.createdAt).toLocaleDateString(
+                              "en-IN",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -451,7 +516,7 @@ const AdminCareers = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddModalOpen(false)}
-              className="fixed inset-0 z-40 bg-[#0F172A]/50 backdrop-blur-md"
+              className="fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-md"
             />
 
             <motion.div
@@ -459,7 +524,7 @@ const AdminCareers = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 120 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
-              className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl overflow-hidden"
+              className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl overflow-hidden font-sans"
             >
               <div className="flex h-full flex-col bg-gradient-to-br from-[#FFF9F0] via-white to-[#F3F4F6] shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
                 <div className="relative overflow-hidden border-b border-[#87CEEB]/20 bg-gradient-to-r from-[#1470A9] via-[#5882A5] to-[#0F172A] px-8 py-8">
@@ -563,6 +628,32 @@ const AdminCareers = () => {
 
                       <div className="space-y-2">
                         <Label className="text-[12px] md:text-[14px] font-bold uppercase tracking-[0.25em] text-[#0F172A]/70">
+                          Employment Type
+                        </Label>
+
+                        <select
+                          className="w-full h-12 rounded-xl border border-[#87CEEB]/30 bg-white px-5 text-[14px] md:text-[18px] font-medium shadow-none focus:border-[#1470A9] focus:ring-0"
+                          value={jobFormData.type}
+                          onChange={(e) =>
+                            setJobFormData({
+                              ...jobFormData,
+                              type: e.target.value,
+                            })
+                          }
+                          required
+                        >
+                          <option value="">Select Type</option>
+                          <option value="Full-time">Full-time</option>
+                          <option value="Part-time">Part-time</option>
+                          <option value="Contract">Contract</option>
+                          <option value="Internship">Internship</option>
+                          <option value="Freelance">Freelance</option>
+                          <option value="Remote">Remote</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[12px] md:text-[14px] font-bold uppercase tracking-[0.25em] text-[#0F172A]/70">
                           Package
                         </Label>
                         <Input
@@ -643,6 +734,17 @@ const AdminCareers = () => {
           </>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        title="Confirm Deletion"
+        description="Are you sure you want to delete this job? This action cannot be undone and will remove all associated applications."
+        onConfirm={() => {
+          if (!deletingJobId) return;
+          deleteMutation.mutate(deletingJobId);
+        }}
+        onOpenChange={setDeleteOpen}
+      />
     </AdminLayout>
   );
 };

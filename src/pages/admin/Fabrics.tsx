@@ -1,5 +1,10 @@
-import React, { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios from "axios";
 import {
   Plus,
@@ -23,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { getImageUrl } from "@/api/config";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { en } from "zod/v4/locales";
 
 type OutfitType = "Suit" | "Shirt" | "Wedding_outfit";
 
@@ -64,30 +70,25 @@ const AdminFabrics = () => {
   const [form, setForm] = useState(initialForm);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const { data: fabrics = [], isLoading } = useQuery<FabricItem[]>({
-    queryKey: ["admin-fabrics"],
+    queryKey: ["admin-fabrics", debouncedSearch],
     queryFn: async () => {
-      const res = await axios.get(`${API}/customize`);
+      const res = await axios.get(
+        `${API}/customize?search=${encodeURIComponent(debouncedSearch)}`,
+      );
       return res.data.customizes || [];
     },
+    placeholderData: keepPreviousData,
   });
 
-  const filteredData = useMemo(() => {
-    return fabrics.filter((item) => {
-      const matchTab = item.outfit === activeTab;
-
-      const term = search.toLowerCase();
-
-      const matchSearch =
-        !term ||
-        item.name.toLowerCase().includes(term) ||
-        item.family.toLowerCase().includes(term) ||
-        item.subLabel.toLowerCase().includes(term);
-
-      return matchTab && matchSearch;
-    });
-  }, [fabrics, activeTab, search]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const resetForm = () => {
     setForm({ ...initialForm, outfit: activeTab });
@@ -212,7 +213,7 @@ const AdminFabrics = () => {
 
   return (
     <AdminLayout>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EAEAEA] pb-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EAEAEA] pb-6 mb-8 font-sans">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 mb-1">
             Customize Inventory
@@ -232,7 +233,7 @@ const AdminFabrics = () => {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6 font-sans">
         {tabs.map((tab) => (
           <button
             key={tab}
@@ -254,7 +255,7 @@ const AdminFabrics = () => {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#EAEAEA] p-4 mb-6">
+      <div className="bg-white rounded-2xl border border-[#EAEAEA] p-4 mb-6 font-sans">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
           <input
@@ -267,7 +268,7 @@ const AdminFabrics = () => {
       </div>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden">
+        <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden font-sans">
           <div className="p-6">
             <DialogHeader className="mb-5">
               <DialogTitle className="text-xl font-semibold">
@@ -403,7 +404,7 @@ const AdminFabrics = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden font-sans">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px]">
             <thead>
@@ -424,14 +425,14 @@ const AdminFabrics = () => {
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                   </td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : Array.isArray(fabrics) && fabrics.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-black/50">
                     No fabrics found
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item) => {
+                (Array.isArray(fabrics) ? fabrics : []).map((item) => {
                   const id = item.id || item._id || "";
 
                   return (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   Package,
@@ -27,6 +27,7 @@ const AdminEnquiries = () => {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const query = useQueryClient();
 
   const categories = [
@@ -40,10 +41,10 @@ const AdminEnquiries = () => {
   ];
 
   const { data: enquiries = [], isLoading } = useQuery({
-    queryKey: ["enquiries", search],
+    queryKey: ["enquiries", debouncedSearch],
     queryFn: async () => {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/inquiries?search=${encodeURIComponent(search)}`,
+        `${import.meta.env.VITE_API_BASE_URL}/inquiries?search=${encodeURIComponent(debouncedSearch)}`,
         {
           withCredentials: true,
         },
@@ -83,6 +84,13 @@ const AdminEnquiries = () => {
     },
   });
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -101,7 +109,7 @@ const AdminEnquiries = () => {
 
   return (
     <AdminLayout>
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6 font-sans">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 mb-1">
             Lead Management
@@ -113,7 +121,7 @@ const AdminEnquiries = () => {
       </div>
 
       {/* Category Tabs */}
-      <div className="flex overflow-x-auto space-x-1 mb-6 no-scrollbar border-b border-[#EAEAEA] pb-px">
+      <div className="flex overflow-x-auto space-x-1 mb-6 no-scrollbar border-b border-[#EAEAEA] pb-px font-sans">
         {categories.map((cat) => (
           <button
             key={cat}
@@ -130,7 +138,7 @@ const AdminEnquiries = () => {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#EAEAEA] p-4 mb-6">
+      <div className="bg-white rounded-2xl border border-[#EAEAEA] p-4 mb-6 font-sans">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
           <input
@@ -142,7 +150,7 @@ const AdminEnquiries = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 font-sans">
         {isLoading ? (
           Array(3)
             .fill(0)

@@ -88,8 +88,8 @@ const AdminDashboard = () => {
     <AdminLayout>
       <div className="space-y-8 max-w-7xl">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#EAEAEA] pb-6">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#EAEAEA] pb-6 font-sans">
+          <div className="font-sans">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 mb-1">
               Systems Intelligence
             </p>
@@ -140,7 +140,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Products Table */}
-        <div className="rounded-lg border border-[#EAEAEA] bg-white shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-[#EAEAEA] bg-white shadow-sm overflow-hidden font-sans">
           <div className="p-5 border-b border-[#EAEAEA] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-[#FAFAFA]">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-black">
               Signature Inventory

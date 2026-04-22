@@ -29,6 +29,7 @@ const AdminProducts = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
@@ -42,8 +43,6 @@ const AdminProducts = () => {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const navigate = useNavigate();
-
   const tabs = [
     "All",
     "suiting",
@@ -54,7 +53,7 @@ const AdminProducts = () => {
   ];
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", activeTab, search],
+    queryKey: ["products", activeTab, debouncedSearch],
     queryFn: async () => {
       const params = new URLSearchParams();
 
@@ -62,8 +61,8 @@ const AdminProducts = () => {
         params.append("category", activeTab.toLowerCase());
       }
 
-      if (search.trim()) {
-        params.append("search", search.trim());
+      if (debouncedSearch.trim()) {
+        params.append("search", debouncedSearch.trim());
       }
 
       const res = await axios.get(
@@ -77,6 +76,13 @@ const AdminProducts = () => {
     },
     placeholderData: keepPreviousData,
   });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   useEffect(() => {
     if (selectedProduct && isAddModalOpen) {
@@ -272,7 +278,7 @@ const AdminProducts = () => {
 
   return (
     <AdminLayout>
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6 font-sans">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 mb-1">
             Inventory Management
@@ -312,7 +318,7 @@ const AdminProducts = () => {
         ))}
       </div>
 
-      <div className="bg-white border border-[#EAEAEA] rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-white border border-[#EAEAEA] rounded-lg overflow-hidden shadow-sm font-sans">
         <div className="p-4 border-b border-[#EAEAEA] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -433,7 +439,7 @@ const AdminProducts = () => {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl border border-[#EAEAEA]">
+        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl border border-[#EAEAEA] font-sans">
           {/* Header */}
           <DialogHeader className="px-8 py-6 border-b border-[#EAEAEA] flex-none">
             <DialogTitle className="text-lg font-semibold tracking-tight text-black">
@@ -471,7 +477,8 @@ const AdminProducts = () => {
                 </div>
 
                 {/* Preview Images */}
-                {(selectedFiles.length > 0 || (mode === "edit" && formData.image?.length > 0)) && (
+                {(selectedFiles.length > 0 ||
+                  (mode === "edit" && formData.image?.length > 0)) && (
                   <div className="grid grid-cols-3 gap-3 mt-3">
                     {/* Existing Images */}
                     {mode === "edit" &&
