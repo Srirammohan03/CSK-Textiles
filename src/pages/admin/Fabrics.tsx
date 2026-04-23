@@ -73,16 +73,20 @@ const AdminFabrics = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const { data: fabrics = [], isLoading } = useQuery<FabricItem[]>({
-    queryKey: ["admin-fabrics", debouncedSearch],
+    queryKey: ["admin-fabrics", debouncedSearch, activeTab],
     queryFn: async () => {
       const res = await axios.get(
-        `${API}/customize?search=${encodeURIComponent(debouncedSearch)}`,
+        `${API}/customize?search=${encodeURIComponent(debouncedSearch)}&outfit=${activeTab}`,
       );
       return res.data.customizes || [];
     },
     placeholderData: keepPreviousData,
   });
+  const filteredFabrics = useMemo(() => {
+    if (!Array.isArray(fabrics)) return [];
 
+    return fabrics.filter((item) => item.outfit === activeTab);
+  }, [fabrics, activeTab]);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -425,14 +429,14 @@ const AdminFabrics = () => {
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                   </td>
                 </tr>
-              ) : Array.isArray(fabrics) && fabrics.length === 0 ? (
+              ) : filteredFabrics.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-black/50">
                     No fabrics found
                   </td>
                 </tr>
               ) : (
-                (Array.isArray(fabrics) ? fabrics : []).map((item) => {
+                filteredFabrics.map((item) => {
                   const id = item.id || item._id || "";
 
                   return (
