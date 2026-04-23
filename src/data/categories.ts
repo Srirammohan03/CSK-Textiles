@@ -7,7 +7,7 @@ import categoryIndoWestern from "/images/indo-western.png";
 import categoryBlazers from "/images/blazers.png";
 import categoryJodhpuri from "/images/jodhpuri.png";
 import categoryTrousers from "/images/trousers.png";
-import categoryDCollection from "/images/designer-collections.jpg";
+import categoryDCollection from "/images/designer-collections.png";
 import categoryEthnic from "/images/ethnic.jpg";
 import categoryPartyWear from "/images/party-wear.png";
 import categoryVelvet from "/images/velvet.png";
