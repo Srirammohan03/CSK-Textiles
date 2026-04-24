@@ -138,14 +138,7 @@ const Footer = ({ variant = "static" }: FooterProps) => {
                 <span>+91 4024567139 | +91 9030609700</span>
               </li>
 
-              <li className="flex items-start gap-3 justify-start">
-                <Clock className="h-5 w-5 mt-1 text-primary shrink-0" />
-                <span>
-                  Mon - Sat: 10 AM - 8 PM
-                  <br />
-                  Sunday: Closed
-                </span>
-              </li>
+             
             </ul>
           </div>
         </div>
