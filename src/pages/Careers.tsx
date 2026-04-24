@@ -327,7 +327,7 @@ const Careers = () => {
                 </Button>
               </div>
 
-              <div className="grid lg:grid-cols-2">
+              <div className="grid lg:grid-cols-2 text-white">
                 {/* LEFT SIDE */}
                 <div className="p-5 sm:p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-white/10">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight mb-8">
