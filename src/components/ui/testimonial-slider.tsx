@@ -156,7 +156,7 @@ export const TestimonialSlider: React.FC = () => {
           <span className="inline-block py-1 px-3 rounded-full bg-primary/10 text-primary text-xs uppercase">
             Testimonials
           </span>
-          <h3 className="text-4xl font-medium mt-4">
+          <h3 className="text-xl md:text-4xl font-medium mt-4">
             Transformative Style Experiences
           </h3>
           <div className="w-20 h-1 bg-accent mx-auto mt-4"></div>
@@ -199,7 +199,7 @@ export const TestimonialSlider: React.FC = () => {
                 <div className="rounded-2xl p-6 bg-white dark:bg-gray-800 shadow-xl h-full relative">
                   <Quote className="absolute top-4 left-4 opacity-10 w-10 h-10" />
 
-                  <p className="italic text-gray-700 dark:text-gray-300 mb-6">
+                  <p className="italic text-gray-700 dark:text-gray-700 mb-6">
                     “{t.quote}”
                   </p>
 

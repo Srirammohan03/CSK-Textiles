@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import axios from "axios";
+import { useAuth } from "@/AuthProvider";
 
 const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,40 +14,25 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const API_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  const { login, isAuthorized } = useAuth();
 
-  React.useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (token) {
-      navigate("/admin/dashboard");
-    }
-  }, [navigate]);
+  if (isAuthorized) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
-
-      const data = response.data;
-
-      if (response.status === 200) {
-        toast.success("Welcome back, Boss!", {
-          description: "Authenticated successfully.",
-        });
-        localStorage.setItem("admin_token", data.token);
-        localStorage.setItem("admin_user", JSON.stringify(data));
-        navigate("/admin/dashboard");
-      } else {
-        toast.error("Authentication failed", {
-          description: data.message || "Invalid credentials",
-        });
+      if (!email || !password) {
+        toast.error("Please enter both email and password.");
+        setIsLoading(false);
+        return;
       }
+
+      await login(email, password);
+      navigate("/admin/dashboard");
     } catch (error) {
       toast.error("Connection Error", {
         description:

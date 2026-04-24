@@ -75,7 +75,7 @@ const CategoryGrid = ({ categories }) => {
       <section
         className="py-16 px-6 "
         style={{
-          backgroundImage: "url('/images/21519.jpg')",
+          backgroundImage: "url('/images/2151914997.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -85,7 +85,7 @@ const CategoryGrid = ({ categories }) => {
           {/* TITLE */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-4">Our collections </h2>
-            <p className="text-muted-foreground">
+            <p className="text-black">
               Why customers choose us. Technology depth and unmatched
               flexibility.
             </p>
@@ -178,7 +178,7 @@ const CategoryGrid = ({ categories }) => {
           <div ref={centerTextRef} className="text-center pointer-events-auto">
             <h2 className="text-5xl font-bold mb-6">Our collections </h2>
 
-            <p className="text-lg text-muted-foreground max-w-md">
+            <p className="text-lg text-black max-w-md">
               Why customers choose us. Technology depth and unmatched
               flexibility.
             </p>

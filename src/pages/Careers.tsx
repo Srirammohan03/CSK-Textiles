@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -7,25 +7,46 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useJobs, Job } from "@/hooks/useJobs";
-import { 
-  Briefcase, 
-  MapPin, 
-  Clock, 
-  IndianRupee, 
-  ChevronRight, 
-  Search, 
+import {
+  Briefcase,
+  MapPin,
+  IndianRupee,
+  ChevronRight,
+  Search,
   Upload,
   CheckCircle2,
   Loader2,
-  AlertCircle,
-  FileText
+  Sparkles,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 const Careers = () => {
-  const { data: jobs = [], isLoading, isError } = useJobs();
+  const { data, isLoading } = useJobs();
+
+  type JobsResponse =
+    | Job[]
+    | {
+        jobs?: Job[];
+        data?: Job[];
+      }
+    | undefined;
+
+  const typedData = data as JobsResponse;
+
+  const jobs: Job[] = Array.isArray(typedData)
+    ? typedData
+    : Array.isArray(typedData?.jobs)
+      ? typedData.jobs
+      : Array.isArray(typedData?.data)
+        ? typedData.data
+        : [];
+  // console.log(jobs);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplying, setIsApplying] = useState(false);
@@ -33,319 +54,491 @@ const Careers = () => {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const filteredJobs = jobs.filter(job => 
-    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    document.body.style.overflow = selectedJob ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedJob]);
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const title = job.title?.toLowerCase() || "";
+      const category = job.category?.toLowerCase() || "";
+      const location = job.location?.toLowerCase() || "";
 
-  const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!selectedJob) return;
-    
-    setSubmitting(true);
-    const formData = new FormData(e.currentTarget);
-    
-    try {
-      // 1. Upload Resume
-      let resumeUrl = "mock-resume-url.pdf"; // Placeholder until actual upload integration
-      if (resumeFile) {
-        const uploadData = new FormData();
-        uploadData.append("image", resumeFile);
-        const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/upload`, {
-          method: "POST",
-          body: uploadData
-        });
-        if (uploadRes.ok) {
-           resumeUrl = await uploadRes.text();
-        }
-      }
+      return (
+        title.includes(searchTerm.toLowerCase()) ||
+        category.includes(searchTerm.toLowerCase()) ||
+        location.includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [jobs, searchTerm]);
 
-      // 2. Submit Application
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/jobs/apply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+  const GOOGLE_SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
+
+  const handleApplyMutation = useMutation({
+    mutationFn: async (form: HTMLFormElement) => {
+      if (!selectedJob) throw new Error("No job selected");
+      if (!resumeFile) throw new Error("Please upload resume");
+
+      const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+      const email = (form.elements.namedItem("email") as HTMLInputElement)
+        .value;
+      const phone = (form.elements.namedItem("phone") as HTMLInputElement)
+        .value;
+      const message = (
+        form.elements.namedItem("message") as HTMLTextAreaElement
+      ).value;
+
+      const uploadData = new FormData();
+      uploadData.append("file", resumeFile);
+
+      const uploadRes = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/upload/career`,
+        uploadData,
+      );
+
+      const resumeUrl = uploadRes.data.url;
+
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/jobs/apply`,
+        {
           jobId: selectedJob.id,
-          name: formData.get("name"),
-          email: formData.get("email"),
-          phone: formData.get("phone"),
-          message: formData.get("message"),
-          resumeUrl
-        })
-      });
+          name,
+          email,
+          phone,
+          message,
+          resumeUrl,
+        },
+      );
 
-      if (res.ok) {
-        toast.success("Application submitted successfully. Good luck!");
-        setIsApplying(false);
-        setSelectedJob(null);
-        setResumeFile(null);
-      } else {
-        throw new Error("Submission failed");
-      }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+      // const googleForm = new FormData();
+      // googleForm.append("type", "job_application");
+      // googleForm.append("jobTitle", selectedJob.title);
+      // googleForm.append("jobId", String(selectedJob.id));
+      // googleForm.append("name", name);
+      // googleForm.append("email", email);
+      // googleForm.append("phone", phone);
+      // googleForm.append("message", message);
+      // googleForm.append("resume", resumeFile);
+
+      // await fetch(GOOGLE_SCRIPT_URL, {
+      //   method: "POST",
+      //   body: googleForm,
+      //   mode: "no-cors",
+      // });
+
+      return data;
+    },
+
+    onSuccess: () => {
+      toast.success("Application submitted");
+      setResumeFile(null);
+      setSelectedJob(null);
+      setIsApplying(false);
+    },
+
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed");
+    },
+  });
+
+  const handleSubmitApply = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleApplyMutation.mutate(e.currentTarget);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbf9f6] text-slate-800 font-body overflow-x-hidden">
+    <div className="min-h-screen bg-white text-black overflow-x-hidden">
       <Header />
 
-      <main className="flex-grow">
-        {/* Careers Hero */}
-        <section className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-primary">
-           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop')] bg-cover bg-center opacity-30" />
-           <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/40 to-[#fbf9f6]" />
-           
-           <div className="relative container mx-auto px-4 text-center">
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Badge variant="outline" className="mb-6 border-white/30 text-white/70 uppercase tracking-[0.3em] py-1 px-4 rounded-full backdrop-blur-sm">
-                  Join The Legacy
-                </Badge>
-                <h1 className="text-5xl md:text-8xl font-display font-medium text-white tracking-tight leading-none mb-8">
-                  Forge Your <span className="italic font-light">Future</span>
-                </h1>
-                <p className="max-w-2xl mx-auto text-xl text-white/60 font-light leading-relaxed">
-                  Become part of a 30-year tradition of excellence in premium textiles and bespoke tailoring.
-                </p>
-              </motion.div>
-           </div>
+      <main>
+        <section className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.15),transparent_35%),radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.12),transparent_30%)]" />
+          <div className="container mx-auto px-4 py-24 md:py-36 relative z-10">
+            <div className="max-w-4xl mx-auto text-center">
+              <Badge className="mb-6 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20 px-4 py-2">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Join Our Team
+              </Badge>
+              <h1 className="text-xl md:text-5xl font-bold leading-tight tracking-tight text-white">
+                Build Your Future With Our Team
+              </h1>
+              <p className="mt-6  text-lg text-slate-300 leading-relaxed">
+                Join a high-performing team shaping the future of luxury textile
+                and bespoke fashion craftsmanship.
+              </p>
+            </div>
+          </div>
         </section>
 
-        {/* Job Search & Listings */}
-        <section className="py-24 container mx-auto px-4 -mt-20 relative z-10">
-           <div className="max-w-5xl mx-auto">
-              <div className="bg-white rounded-[2.5rem] shadow-elegant p-8 border border-slate-100 mb-12 flex flex-col md:flex-row items-center gap-6">
-                 <div className="relative flex-grow group">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-primary transition-colors" />
-                    <Input 
-                      placeholder="Search roles (e.g. Master Tailor, Designer)" 
-                      className="h-16 pl-14 rounded-2xl border-slate-100 bg-slate-50/50 focus:ring-primary/5 focus:border-primary transition-all text-lg font-medium"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                 </div>
-                 <Badge className="bg-accent/10 text-accent border-accent/20 px-6 py-3 rounded-2xl text-sm font-bold uppercase tracking-widest hidden md:block">
-                    {filteredJobs.length} Open Positions
-                 </Badge>
-              </div>
+        <section className="container mx-auto px-4 py-14">
+          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 md:p-6 mb-10 sticky top-4 z-20">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by title, category, or location"
+                className="h-14 rounded-2xl border-black  pl-12 text-black  placeholder:text-slate-500"
+              />
+            </div>
+          </div>
 
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                   <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                   <p className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">Reviewing Opportunities</p>
-                </div>
-              ) : filteredJobs.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6">
-                   {filteredJobs.map((job) => (
-                     <motion.div
-                       key={job.id}
-                       initial={{ opacity: 0, y: 20 }}
-                       whileInView={{ opacity: 1, y: 0 }}
-                       viewport={{ once: true }}
-                       className="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-elegant hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
-                     >
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                           <div className="flex-grow space-y-4">
-                              <div className="flex items-center gap-3">
-                                <span className="bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border border-primary/10">
-                                   {job.category}
-                                </span>
-                                <span className={cn(
-                                   "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border",
-                                   job.type === "Full-time" ? "bg-green-50 text-green-600 border-green-100" : "bg-blue-50 text-blue-600 border-blue-100"
-                                )}>
-                                   {job.type}
-                                </span>
-                              </div>
-                              <h3 className="text-3xl font-display font-medium text-slate-800 tracking-tight group-hover:text-primary transition-colors">
-                                 {job.title}
-                              </h3>
-                              <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-slate-400 uppercase tracking-widest">
-                                 <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-accent" />
-                                    {job.location}
-                                 </div>
-                                 <div className="flex items-center gap-2">
-                                    <IndianRupee className="w-4 h-4 text-accent" />
-                                    {job.package}
-                                 </div>
-                              </div>
-                           </div>
-                           <Button 
-                             onClick={() => setSelectedJob(job)}
-                             className="bg-primary hover:bg-primary/95 text-white rounded-2xl px-10 h-16 font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20 flex items-center gap-3"
-                           >
-                              View Details
-                              <ChevronRight className="w-4 h-4" />
-                           </Button>
-                        </div>
-                     </motion.div>
-                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-40 border-2 border-dashed border-slate-200 rounded-[3rem]">
-                   <Briefcase className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-                   <h3 className="text-3xl font-display font-medium text-slate-400">Current Queue Empty</h3>
-                   <p className="text-slate-400 font-light mt-2 italic">Follow our Instagram for flash recruitment updates.</p>
-                </div>
-              )}
-           </div>
-        </section>
+          {isLoading ? (
+            <div className="flex justify-center py-24">
+              <Loader2 className="w-10 h-10 animate-spin text-amber-400" />
+            </div>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+              {filteredJobs.map((job) => (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="group relative overflow-hidden rounded-[2rem] border border-[#eadfcd] bg-white p-7 shadow-[0_10px_40px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_70px_rgba(0,0,0,0.09)] hover:-translate-y-1 transition-all duration-500"
+                >
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between mb-5">
+                    <Badge className="rounded-full bg-[#fff7e8] text-[#d49a1f] border border-[#f4d7a1] px-4 py-1 font-medium">
+                      {job.category}
+                    </Badge>
 
-        {/* Job Details Modal */}
-        <AnimatePresence>
-          {selectedJob && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-               <motion.div 
-                 initial={{ opacity: 0 }}
-                 animate={{ opacity: 1 }}
-                 exit={{ opacity: 0 }}
-                 onClick={() => setSelectedJob(null)}
-                 className="absolute inset-0 bg-black/60 backdrop-blur-md" 
-               />
-               <motion.div
-                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                 className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl p-8 md:p-12 no-scrollbar"
-               >
-                  <div className="flex flex-col md:flex-row gap-12">
-                     <div className="flex-1 space-y-8">
-                        <div>
-                           <Badge variant="outline" className="mb-4 text-accent border-accent/20 uppercase font-black text-[9px] tracking-[0.2em]">
-                              {selectedJob.category} Opportunity
-                           </Badge>
-                           <h2 className="text-4xl md:text-5xl font-display font-medium tracking-tight text-slate-900 leading-none">
-                              {selectedJob.title}
-                           </h2>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6 bg-[#fbf9f6] p-6 rounded-3xl border border-slate-100">
-                           <div className="space-y-1">
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</p>
-                              <p className="font-bold text-slate-700">{selectedJob.location}</p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Package</p>
-                              <p className="font-bold text-slate-700">{selectedJob.package}</p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Schedule</p>
-                              <p className="font-bold text-slate-700">{selectedJob.type}</p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Added On</p>
-                              <p className="font-bold text-slate-700">{new Date(selectedJob.createdAt).toLocaleDateString()}</p>
-                           </div>
-                        </div>
-
-                        <div className="space-y-8">
-                           <div>
-                              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary mb-4 flex items-center gap-3">
-                                 The Role
-                                 <div className="h-px flex-1 bg-primary/10" />
-                              </h4>
-                              <p className="text-slate-600 leading-relaxed font-light whitespace-pre-line">
-                                 {selectedJob.description}
-                              </p>
-                           </div>
-                           <div>
-                              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary mb-4 flex items-center gap-3">
-                                 Requirements
-                                 <div className="h-px flex-1 bg-primary/10" />
-                              </h4>
-                              <p className="text-slate-600 leading-relaxed font-light whitespace-pre-line">
-                                 {selectedJob.requirements}
-                              </p>
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="w-full md:w-80 shrink-0">
-                        <div className="bg-primary p-8 rounded-[40px] text-white shadow-xl shadow-primary/20 sticky top-0 group">
-                           <h3 className="text-2xl font-display font-medium mb-4">Start Your Application</h3>
-                           <p className="text-white/60 text-sm font-light mb-8 italic">"Greatness is forged by those who dare to be exceptional."</p>
-                           
-                           {!isApplying ? (
-                             <Button 
-                               onClick={() => setIsApplying(true)}
-                               className="w-full h-16 bg-accent hover:bg-accent/90 text-primary font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-lg shadow-accent/20"
-                             >
-                               Apply Now
-                             </Button>
-                           ) : (
-                             <form onSubmit={handleApply} className="space-y-4">
-                               <div className="space-y-2">
-                                  <Label className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Full Name</Label>
-                                  <Input name="name" required className="bg-white/10 border-white/20 text-white placeholder:text-white/20 rounded-xl h-14" placeholder="Your Name" />
-                               </div>
-                               <div className="space-y-2">
-                                  <Label className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Email Address</Label>
-                                  <Input name="email" type="email" required className="bg-white/10 border-white/20 text-white placeholder:text-white/20 rounded-xl h-14" placeholder="email@example.com" />
-                               </div>
-                               <div className="space-y-2">
-                                  <Label className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Phone Number</Label>
-                                  <Input name="phone" type="tel" required className="bg-white/10 border-white/20 text-white placeholder:text-white/20 rounded-xl h-14" placeholder="+91 XXXX XXX XXX" />
-                               </div>
-                               <div className="space-y-2">
-                                  <Label className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Resume (PDF)</Label>
-                                  <div 
-                                    onClick={() => document.getElementById('resume-upload')?.click()}
-                                    className="cursor-pointer border-2 border-dashed border-white/20 rounded-xl p-4 flex items-center justify-center gap-3 hover:bg-white/5 transition-all"
-                                  >
-                                     {resumeFile ? <CheckCircle2 className="w-5 h-5 text-accent" /> : <Upload className="w-5 h-5 text-white/40" />}
-                                     <span className="text-xs text-white/60 font-medium truncate max-w-[150px]">
-                                        {resumeFile ? resumeFile.name : "Upload Resume"}
-                                     </span>
-                                  </div>
-                                  <input 
-                                    id="resume-upload" 
-                                    type="file" 
-                                    accept=".pdf,.doc,.docx" 
-                                    className="hidden" 
-                                    onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                                    required
-                                  />
-                               </div>
-                               <Button 
-                                 type="submit"
-                                 disabled={submitting}
-                                 className="w-full h-16 bg-white text-primary hover:bg-gray-100 font-bold uppercase tracking-widest text-[11px] rounded-2xl mt-4"
-                               >
-                                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Application"}
-                               </Button>
-                               <Button 
-                                 variant="ghost" 
-                                 onClick={() => setIsApplying(false)}
-                                 className="w-full text-white/40 hover:text-white font-bold text-[10px] uppercase tracking-widest"
-                               >
-                                 Back to Details
-                               </Button>
-                             </form>
-                           )}
-                        </div>
-                     </div>
+                    <Badge
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs font-semibold border",
+                        job.status === "Open"
+                          ? "bg-green-50 text-green-700 border-green-200"
+                          : "bg-red-50 text-red-700 border-red-200",
+                      )}
+                    >
+                      {job.status}
+                    </Badge>
                   </div>
-               </motion.div>
+
+                  {/* Title */}
+                  <h3 className="text-2xl font-bold text-[#111827] leading-snug mb-3 line-clamp-2">
+                    {job.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-slate-500 text-sm leading-7 mb-6 line-clamp-3">
+                    {job.description}
+                  </p>
+
+                  {/* Details */}
+                  <div className="space-y-3 text-sm text-slate-600 mb-8">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-4 h-4 text-[#d49a1f]" />
+                      <span>{job.location}</span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <IndianRupee className="w-4 h-4 text-[#d49a1f]" />
+                      <span>{job.package} LPA</span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Briefcase className="w-4 h-4 text-[#d49a1f]" />
+                      <span>{job.type}</span>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <span className="text-xs text-slate-400">
+                      Posted{" "}
+                      {new Date(job.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+
+                    <Button
+                      onClick={() => setSelectedJob(job)}
+                      className="rounded-xl bg-[#f4b400] text-black hover:bg-[#e8ab00] font-semibold px-5"
+                    >
+                      View
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           )}
-        </AnimatePresence>
-
-        <Footer />
+        </section>
       </main>
+
+      <AnimatePresence>
+        {selectedJob && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setSelectedJob(null);
+                setIsApplying(false);
+              }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 20 }}
+              className="
+          relative
+          z-10
+          w-full
+          max-w-6xl
+          max-h-[94vh]
+          overflow-y-auto
+          rounded-[2rem]
+          border border-white/10
+          bg-slate-950
+          shadow-[0_30px_100px_rgba(0,0,0,0.45)]
+        "
+            >
+              {/* Sticky Header */}
+              <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-slate-950/90 px-5 sm:px-8 py-4 backdrop-blur-xl">
+                <Badge className="bg-amber-400/10 text-amber-300 border border-amber-400/20">
+                  {selectedJob.category}
+                </Badge>
+
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedJob(null);
+                    setIsApplying(false);
+                  }}
+                  className="rounded-full text-white hover:bg-white/10"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="grid lg:grid-cols-2 text-white">
+                {/* LEFT SIDE */}
+                <div className="p-5 sm:p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-white/10">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight mb-8">
+                    {selectedJob.title}
+                  </h2>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                    <InfoCard label="Location" value={selectedJob.location} />
+                    <InfoCard label="Package" value={selectedJob.package} />
+                    <InfoCard label="Type" value={selectedJob.type} />
+                    <InfoCard
+                      label="Posted"
+                      value={new Date(
+                        selectedJob.createdAt,
+                      ).toLocaleDateString()}
+                    />
+                  </div>
+
+                  <Section
+                    title="Job Description"
+                    content={selectedJob.description}
+                  />
+
+                  <div className="mt-8">
+                    <Section
+                      title="Requirements"
+                      content={selectedJob.requirements}
+                    />
+                  </div>
+                </div>
+
+                {/* RIGHT SIDE */}
+                <div className="p-5 sm:p-8 md:p-10 bg-slate-900/40">
+                  {!isApplying ? (
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+                      <h3 className="text-2xl font-bold text-white mb-3">
+                        Ready to Apply?
+                      </h3>
+
+                      <p className="text-slate-400 mb-6 leading-relaxed">
+                        Submit your application and our team will review it
+                        shortly.
+                      </p>
+
+                      <Button
+                        onClick={() => setIsApplying(true)}
+                        className="
+                    w-full
+                    h-14
+                    rounded-2xl
+                    bg-amber-400
+                    text-slate-950
+                    hover:bg-amber-300
+                    font-semibold
+                  "
+                      >
+                        Apply Now
+                      </Button>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={handleSubmitApply}
+                      className="
+                  rounded-3xl
+                  border
+                  border-white/10
+                  bg-white/5
+                  p-5
+                  sm:p-8
+                  space-y-5
+                "
+                    >
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        Application Form
+                      </h3>
+
+                      <FormField label="Full Name" name="name" />
+                      <FormField label="Email" name="email" type="email" />
+                      <FormField label="Phone" name="phone" />
+
+                      <div>
+                        <Label className="mb-2 block text-slate-300">
+                          Message
+                        </Label>
+                        <Textarea
+                          name="message"
+                          className="
+                      min-h-[140px]
+                      rounded-2xl
+                      border-white/10
+                      bg-slate-950
+                      text-white
+                      focus-visible:ring-amber-400
+                    "
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="mb-2 block text-slate-300">
+                          Resume
+                        </Label>
+
+                        <label
+                          className="
+                      flex
+                      flex-col
+                      items-center
+                      justify-center
+                      gap-3
+                      rounded-2xl
+                      border
+                      border-dashed
+                      border-white/20
+                      bg-slate-950
+                      px-4
+                      py-6
+                      hover:bg-slate-900
+                      transition-colors
+                      cursor-pointer
+                      text-center
+                    "
+                        >
+                          {resumeFile ? (
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                          ) : (
+                            <Upload className="w-5 h-5 text-slate-400" />
+                          )}
+
+                          <span className="text-sm text-slate-300 break-all">
+                            {resumeFile?.name ||
+                              "Upload Resume (.pdf, .doc, .docx)"}
+                          </span>
+
+                          <input
+                            hidden
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            required
+                            onChange={(e) =>
+                              setResumeFile(e.target.files?.[0] || null)
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={handleApplyMutation.isPending}
+                        className="
+                    w-full
+                    h-14
+                    rounded-2xl
+                    bg-amber-400
+                    text-slate-950
+                    hover:bg-amber-300
+                    font-semibold
+                  "
+                      >
+                        {handleApplyMutation.isPending ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          "Submit Application"
+                        )}
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      <Footer />
     </div>
   );
 };
+
+const InfoCard = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <p className="text-xs uppercase tracking-widest text-slate-500 mb-1">
+      {label}
+    </p>
+    <p className="font-medium text-white">{value}</p>
+  </div>
+);
+
+const Section = ({ title, content }: { title: string; content: string }) => (
+  <div>
+    <h4 className="text-lg font-semibold mb-3">{title}</h4>
+    <p className="text-slate-300 whitespace-pre-line leading-8">{content}</p>
+  </div>
+);
+
+const FormField = ({
+  label,
+  name,
+  type = "text",
+}: {
+  label: string;
+  name: string;
+  type?: string;
+}) => (
+  <div>
+    <Label className="mb-2 block text-slate-300">{label}</Label>
+    <Input
+      required
+      name={name}
+      type={type}
+      className="h-12 rounded-2xl border-white/10 bg-slate-950 text-white"
+    />
+  </div>
+);
 
 export default Careers;

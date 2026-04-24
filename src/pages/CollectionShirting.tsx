@@ -6,7 +6,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/hooks/useProducts";
-import { getImageUrl } from "@/api/config";
 import shirtingBanner from "/images/shirtingBanner.png";
 import { ChevronRight, Filter, ShoppingBag, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
@@ -46,7 +45,7 @@ const CollectionShirting = () => {
       <Header />
 
       <main className="flex-grow">
-        <section className="relative py-10 md:py-20 overflow-hidden">
+        <section className="relative py-28 md:py-40 overflow-hidden">
           <motion.div
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
@@ -81,7 +80,7 @@ const CollectionShirting = () => {
           </div>
         </section>
 
-        <section className="relative z-50 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
+        <section className="relative z-10 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <Link

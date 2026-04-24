@@ -9,6 +9,7 @@ import { ChevronRight, Filter, ShoppingBag, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import { FilterDropdown } from "@/components/FilterDropdown";
+import kurthaBanner from "/images/kurtha.png";
 
 const CollectionKurta = () => {
   const { data: products = [], isLoading } = useProducts("kurta-pyjama");
@@ -44,9 +45,19 @@ const CollectionKurta = () => {
 
       <main className="flex-grow">
         <section className="relative py-28 md:py-40 overflow-hidden bg-primary/20">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1597843797221-39656811a01d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-60 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505]" />
-          
+          <motion.div
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0"
+          >
+            <img
+              src={kurthaBanner}
+              alt="Premium Kurtha Pyjama Collection"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/20" />
+          </motion.div>
           <div className="relative h-full container mx-auto px-4 flex flex-col justify-center items-center text-center">
             <motion.div
               initial={{ y: 30, opacity: 0 }}
@@ -60,18 +71,19 @@ const CollectionKurta = () => {
                 Kurta <span className="italic font-light">Pyjama</span>
               </h1>
               <p className="max-w-xl mx-auto text-lg text-white/60 font-light leading-relaxed">
-                Heritage craftsmanship meets contemporary design. Discover our curated collection of ethnic elegance.
+                Heritage craftsmanship meets contemporary design. Discover our
+                curated collection of ethnic elegance.
               </p>
             </motion.div>
           </div>
         </section>
 
-        <section className="relative z-50 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
+        <section className="relative z-10 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <Link
                 to="/customize"
-                state={{ outfit: "Wedding outfit" }}
+                state={{ outfit: "Wedding_outfit" }}
                 className="w-full md:w-auto"
               >
                 <Button className="w-full md:w-auto rounded-full px-8 h-12 md:h-14 bg-white text-black hover:bg-gray-200 transition-all duration-300 shadow-xl group text-xs md:text-sm font-bold tracking-wide">

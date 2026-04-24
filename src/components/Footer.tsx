@@ -73,6 +73,14 @@ const Footer = ({ variant = "static" }: FooterProps) => {
               </li>
               <li>
                 <Link
+                  to="/careers"
+                  className="text-muted-foreground hover:text-primary transition"
+                >
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/contact"
                   className="text-muted-foreground hover:text-primary transition"
                 >

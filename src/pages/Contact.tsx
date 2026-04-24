@@ -33,6 +33,7 @@ export default function Contact() {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
+    email: "",
     message: "",
   });
 
@@ -49,40 +50,46 @@ export default function Contact() {
       contactSchema.parse(formData);
       setErrors({});
 
-      const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
-      // 1. Send to CMS Backend
-      const res = await fetch(`${API_URL}/inquiries`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          type: "contact",
-          productCategory: "general"
-        })
-      });
-
-      // 2. Backup to Google Script (Optional, but keeping for resilience)
-      const payload = new FormData();
+      const payload = new URLSearchParams();
       payload.append("name", formData.name);
       payload.append("phone", formData.phone);
+      payload.append("email", formData.email);
       payload.append("message", formData.message);
       payload.append("type", "contact");
 
-      fetch(GOOGLE_SCRIPT_URL_3, {
+      // Fire backend attempt (optional)
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/inquiries`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          type: "contact",
+          productCategory: "contact",
+        }),
+      }).catch((err) => {
+        console.error("Backend Failed:", err);
+      });
+
+      // Always submit to Google Sheets
+      await fetch(GOOGLE_SCRIPT_URL_3, {
         method: "POST",
         body: payload,
-      }).catch(console.error);
+        mode: "no-cors",
+      });
 
-      if (res.ok) {
-        toast({
-          title: "Inquiry Received",
-          description: "Our master tailors will contact you shortly.",
-        });
-        setFormData({ name: "", phone: "", message: "" });
-      } else {
-        throw new Error("Backend failed");
-      }
+      toast({
+        title: "Inquiry Received",
+        description: "Our master tailors will contact you shortly.",
+      });
+
+      setFormData({
+        name: "",
+        phone: "",
+        message: "",
+        email: "",
+      });
     } catch (err) {
       if (err instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
@@ -96,6 +103,7 @@ export default function Contact() {
         setErrors(fieldErrors);
       } else {
         console.error(err);
+
         toast({
           title: "Error",
           description: "Submission failed",
@@ -131,7 +139,7 @@ export default function Contact() {
 
       <main className="flex-grow">
         {/* HERO */}
-        <section className="relative py-20 md:py-28 text-center overflow-hidden">
+        <section className="relative py-28 md:py-40 text-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40">
             <img
               src="/images/premium-banner.png"
@@ -223,6 +231,8 @@ export default function Contact() {
                     <Input
                       name="phone"
                       placeholder="Phone Number"
+                      type="number"
+                      maxLength={10}
                       value={formData.phone}
                       onChange={(e) => {
                         setFormData({ ...formData, phone: e.target.value });
@@ -236,6 +246,28 @@ export default function Contact() {
                     />
                     {errors.phone && (
                       <p className="text-xs text-red-500">{errors.phone}</p>
+                    )}
+                  </div>
+
+                  {/* Email  */}
+                  <div className="space-y-1">
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Email Id"
+                      value={formData.email}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        if (errors.email) setErrors({ ...errors, email: "" });
+                      }}
+                      className={`h-12 rounded-xl ${
+                        errors.email
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }`}
+                    />
+                    {errors.email && (
+                      <p className="text-xs text-red-500">{errors.email}</p>
                     )}
                   </div>
 
@@ -294,7 +326,7 @@ export default function Contact() {
         </section>
 
         {/* CTA STRIP */}
-        <section className="bg-black text-white py-12 text-center">
+        <section className="bg-primary text-white py-12 text-center">
           <h3 className="text-2xl md:text-3xl font-semibold">
             Need Help Choosing Fabric?
           </h3>

@@ -9,6 +9,7 @@ import { ChevronRight, Filter, ShoppingBag, Loader2 } from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import { FilterDropdown } from "@/components/FilterDropdown";
+import RtwBanner from "/images/rtw2.png";
 
 const CollectionReadyToWear = () => {
   const { data: products = [], isLoading } = useProducts("ready-to-wear");
@@ -18,17 +19,31 @@ const CollectionReadyToWear = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const filters = ["All", "Shirts", "Trousers", "Jackets", "Ethnic"];
+  const filters = ["All", "Shirts", "Suiting", "Wedding", "Kurta Pyjama"];
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const filterMatch =
-        activeFilter === "All" ||
-        p.fabric?.toLowerCase().includes(activeFilter.toLowerCase()) ||
-        p.tags?.some((tag) =>
-          tag.toLowerCase().includes(activeFilter.toLowerCase()),
-        );
-      return filterMatch;
+      if (activeFilter === "All") return true;
+
+      const filterMap: Record<string, string> = {
+        Shirts: "shirting",
+        Suiting: "suiting",
+        Wedding: "wedding-sherwani",
+        "Kurta Pyjama": "kurta-pyjama",
+      };
+
+      const targetCategory =
+        filterMap[activeFilter] || activeFilter.toLowerCase();
+
+      const categoryMatch = p.category?.toLowerCase().includes(targetCategory);
+      const fabricMatch = p.fabric
+        ?.toLowerCase()
+        .includes(activeFilter.toLowerCase());
+      const tagMatch = p.tags?.some((tag) =>
+        tag.toLowerCase().includes(activeFilter.toLowerCase()),
+      );
+
+      return categoryMatch || fabricMatch || tagMatch;
     });
   }, [activeFilter, products]);
 
@@ -44,9 +59,19 @@ const CollectionReadyToWear = () => {
 
       <main className="flex-grow">
         <section className="relative py-28 md:py-40 overflow-hidden bg-accent/10">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505]" />
-          
+          <motion.div
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0"
+          >
+            <img
+              src={RtwBanner}
+              alt="Premium Ready-to-Wear Collection"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/20" />
+          </motion.div>
           <div className="relative h-full container mx-auto px-4 flex flex-col justify-center items-center text-center">
             <motion.div
               initial={{ y: 30, opacity: 0 }}
@@ -60,18 +85,23 @@ const CollectionReadyToWear = () => {
                 Ready <span className="italic font-light">To Wear</span>
               </h1>
               <p className="max-w-xl mx-auto text-lg text-white/60 font-light leading-relaxed">
-                Premium craftsmanship, ready for your next occasion. Impeccable fit met with uncompromising style.
+                Premium craftsmanship, ready for your next occasion. Impeccable
+                fit met with uncompromising style.
               </p>
             </motion.div>
           </div>
         </section>
 
-        <section className="relative z-50 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
+        <section className="relative z-10 py-6 md:py-10 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-3xl">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex flex-col">
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-accent mb-1">Instant Sophistication</p>
-                <p className="text-white/40 text-xs font-light tracking-wide">Pre-finished masterpiece selections</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-accent mb-1">
+                  Instant Sophistication
+                </p>
+                <p className="text-white/40 text-xs font-light tracking-wide">
+                  Pre-finished masterpiece selections
+                </p>
               </div>
 
               <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto bg-white/[0.04] px-4 py-3 rounded-2xl border border-white/10 shadow-inner">

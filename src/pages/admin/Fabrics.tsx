@@ -1,156 +1,496 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  LogOut, 
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import axios from "axios";
+import {
+  Plus,
   Search,
-  ChevronRight,
-  Package,
-  Layers,
-  ArrowRight,
-  Menu,
-  X
+  Loader2,
+  Trash2,
+  Pencil,
+  Shirt,
+  Gem,
+  Briefcase,
+  Image as ImageIcon,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import AdminLayout from "@/components/admin/AdminLayout";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getImageUrl } from "@/api/config";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { en } from "zod/v4/locales";
+
+type OutfitType = "Suit" | "Shirt" | "Wedding_outfit";
+
+type FabricItem = {
+  id?: string;
+  _id?: string;
+  outfit: OutfitType;
+  name: string;
+  family: string;
+  subLabel: string;
+  pattern?: string;
+  premium?: boolean;
+  lightweight?: boolean;
+  textureImage?: string;
+};
+
+const API = import.meta.env.VITE_API_BASE_URL;
+
+const tabs: OutfitType[] = ["Suit", "Shirt", "Wedding_outfit"];
+
+const initialForm = {
+  id: "",
+  outfit: "Suit" as OutfitType,
+  name: "",
+  family: "",
+  subLabel: "",
+  pattern: "solid",
+  premium: false,
+  lightweight: false,
+  textureImage: null as File | null,
+};
 
 const AdminFabrics = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const fabricCategories = [
-    { name: "Egyptian Cotton", type: "Shirting", count: 24, description: "Premium long-staple cotton for luxury shirts." },
-    { name: "Pure Silk", type: "Suiting/Wedding", count: 12, description: "Hand-loomed silk for royal ceremonial wear." },
-    { name: "Italian Wool", type: "Suiting", count: 18, description: "Fine wool for executive-class bespoke suits." },
-    { name: "Linen Master", type: "Summer Wear", count: 15, description: "Breathable linen for casual elegance." },
-  ];
+  const [activeTab, setActiveTab] = useState<OutfitType>("Suit");
+  const [search, setSearch] = useState("");
+  const [openForm, setOpenForm] = useState(false);
+  const [form, setForm] = useState(initialForm);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    toast.success("Logged out successfully");
-    navigate("/admin/login");
+  const { data: fabrics = [], isLoading } = useQuery<FabricItem[]>({
+    queryKey: ["admin-fabrics", debouncedSearch, activeTab],
+    queryFn: async () => {
+      const res = await axios.get(
+        `${API}/customize?search=${encodeURIComponent(debouncedSearch)}&outfit=${activeTab}`,
+      );
+      return res.data.customizes || [];
+    },
+    placeholderData: keepPreviousData,
+  });
+  const filteredFabrics = useMemo(() => {
+    if (!Array.isArray(fabrics)) return [];
+
+    return fabrics.filter((item) => item.outfit === activeTab);
+  }, [fabrics, activeTab]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const resetForm = () => {
+    setForm({ ...initialForm, outfit: activeTab });
+    setOpenForm(false);
+  };
+
+  const uploadImage = async (file: File) => {
+    const fd = new FormData();
+    fd.append("image", file);
+
+    const res = await axios.post(`${API}/upload/unauth`, fd, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res.data;
+  };
+
+  const createPayload = async () => {
+    let imageUrl = form.textureImage as any;
+
+    if (form.textureImage instanceof File) {
+      imageUrl = await uploadImage(form.textureImage);
+    }
+
+    if (!form.textureImage && form.id) {
+      const oldItem = fabrics.find(
+        (item) => String(item.id || item._id) === String(form.id),
+      );
+
+      imageUrl = oldItem?.textureImage || "";
+    }
+
+    return {
+      outfit: form.outfit,
+      name: form.name,
+      family: form.family,
+      subLabel: form.subLabel,
+      pattern: form.pattern,
+      premium: form.premium,
+      lightweight: form.lightweight,
+      textureImage: imageUrl,
+    };
+  };
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      const payload = await createPayload();
+      return axios.post(`${API}/customize/add`, payload);
+    },
+    onSuccess: () => {
+      toast.success("Fabric added successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-fabrics"] });
+      resetForm();
+    },
+    onError: () => toast.error("Failed to add fabric"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const payload = await createPayload();
+      return axios.put(`${API}/customize/${form.id}`, payload);
+    },
+    onSuccess: () => {
+      toast.success("Fabric updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-fabrics"] });
+      resetForm();
+    },
+    onError: () => toast.error("Failed to update fabric"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!deleteId) return;
+      return axios.delete(`${API}/customize/delete/${deleteId}`);
+    },
+    onSuccess: () => {
+      toast.success("Fabric deleted");
+      queryClient.invalidateQueries({ queryKey: ["admin-fabrics"] });
+      setDeleteId(null);
+      setDeleteOpen(false);
+    },
+    onError: () => toast.error("Failed to delete"),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.name || !form.family || !form.subLabel) {
+      toast.error("Please fill required fields");
+      return;
+    }
+
+    if (form.id) {
+      updateMutation.mutate();
+    } else {
+      addMutation.mutate();
+    }
+  };
+
+  const handleDelete = (id) => {
+    setDeleteId(id);
+    setDeleteOpen(true);
+  };
+
+  const handleEdit = (item: FabricItem) => {
+    setForm({
+      id: item.id || item._id || "",
+      outfit: item.outfit,
+      name: item.name,
+      family: item.family,
+      subLabel: item.subLabel,
+      pattern: item.pattern || "solid",
+      premium: !!item.premium,
+      lightweight: !!item.lightweight,
+      textureImage: item.textureImage as any,
+    });
+
+    setOpenForm(true);
   };
 
   return (
-    <div className="flex h-screen bg-[#fbf9f6] text-slate-800 font-body overflow-hidden">
-      {/* Sidebar - Consistent Estate Blue */}
-      <AnimatePresence mode="wait">
-        {sidebarOpen && (
-          <motion.aside
-            initial={{ x: -250 }}
-            animate={{ x: 0 }}
-            exit={{ x: -250 }}
-            className="w-72 bg-primary border-r border-white/10 flex flex-col z-20 shadow-2xl"
-          >
-            <div className="p-8 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center font-bold text-primary shadow-lg shadow-accent/20">C</div>
-                <div className="flex flex-col text-white">
-                  <span className="font-display font-bold text-xl tracking-tight leading-none">CSK Admin</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mt-1">Management Suite</span>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/50 hover:text-white">
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <nav className="flex-1 px-6 space-y-3 mt-6">
-              {[
-                { name: "Executive Summary", icon: LayoutDashboard, path: "/admin/dashboard" },
-                { name: "Signature Collection", icon: ShoppingBag, path: "/admin/products" },
-                { name: "Fabric Categories", icon: Package, path: "/admin/fabrics", active: true },
-                { name: "Customer Enquiries", icon: Layers, path: "/admin/enquiries" },
-              ].map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => navigate(item.path)}
-                  className={`w-full flex items-center justify-between px-4 py-4 rounded-2xl text-sm font-bold transition-all ${
-                    item.active 
-                      ? "bg-accent text-primary shadow-lg shadow-accent/20" 
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <item.icon className="w-5 h-5" />
-                    <span className="uppercase tracking-[0.1em] text-[11px]">{item.name}</span>
-                  </div>
-                  {item.active && <ChevronRight className="w-4 h-4" />}
-                </button>
-              ))}
-            </nav>
-
-            <div className="p-6 mt-auto">
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-6 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] text-white/60 hover:text-white hover:bg-red-500/20 transition-all border border-white/10"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Terminate Session</span>
-              </button>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
-      <main className="flex-1 flex flex-col relative overflow-hidden px-10">
-        <header className="h-24 bg-white/50 backdrop-blur-xl flex items-center justify-between z-10">
-           <div className="flex items-center space-x-6">
-            {!sidebarOpen && (
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="text-primary hover:bg-primary/5">
-                <Menu className="w-6 h-6" />
-              </Button>
-            )}
-            <div className="flex items-center space-x-3 text-[10px] font-bold uppercase tracking-[0.3em] text-primary/50">
-              <span className="hover:text-primary transition-colors cursor-pointer" onClick={() => navigate('/admin/dashboard')}>Admin Control</span>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-primary">Fabric Library</span>
-            </div>
-          </div>
-        </header>
-
-        <div className="py-10">
-           <div className="mb-12">
-            <p className="editorial-caps text-[12px] opacity-60 mb-2">Material Archive</p>
-            <h2 className="editorial-heading text-4xl font-bold tracking-tight text-slate-900">Premium Fabrics</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {fabricCategories.map((cat, i) => (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                key={cat.name}
-                className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-elegant hover:shadow-2xl transition-all group"
-              >
-                <div className="w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
-                  <Package className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2">{cat.name}</h3>
-                <span className="text-[10px] uppercase tracking-[0.2em] font-black text-accent mb-4 block">{cat.type}</span>
-                <p className="text-sm text-slate-400 font-light leading-relaxed mb-6">{cat.description}</p>
-                
-                <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                   <span className="text-xs font-bold text-slate-700">{cat.count} Variants</span>
-                   <button className="text-primary hover:text-accent transition-colors">
-                     <ArrowRight className="w-5 h-5" />
-                   </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="mt-16 bg-white/70 rounded-[3rem] p-12 border border-slate-100 text-center">
-             <Layers className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-             <h3 className="text-2xl font-bold text-slate-400 tracking-tight">Advanced Inventory Control</h3>
-             <p className="text-slate-400 text-sm mt-2 max-w-sm mx-auto">Fabric categorization allows for high-precision filtering in the Signature Collection gallery.</p>
-          </div>
+    <AdminLayout>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EAEAEA] pb-6 mb-8 font-sans">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40 mb-1">
+            Customize Inventory
+          </p>
+          <h2 className="text-2xl text-black tracking-tight">Admin Fabrics</h2>
         </div>
-      </main>
-    </div>
+
+        <Button
+          onClick={() => {
+            setForm({ ...initialForm, outfit: activeTab });
+            setOpenForm(true);
+          }}
+          className="h-11 px-5 rounded-xl bg-black text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Fabric
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-6 font-sans">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => {
+              setActiveTab(tab);
+              setForm((prev) => ({ ...prev, outfit: tab }));
+            }}
+            className={`h-11 px-5 rounded-xl border flex items-center gap-2 transition ${
+              activeTab === tab
+                ? "bg-black text-white border-black"
+                : "bg-white text-black border-[#E5E7EB]"
+            }`}
+          >
+            {tab === "Suit" && <Briefcase className="w-4 h-4" />}
+            {tab === "Shirt" && <Shirt className="w-4 h-4" />}
+            {tab === "Wedding_outfit" && <Gem className="w-4 h-4" />}
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#EAEAEA] p-4 mb-6 font-sans">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search fabrics..."
+            className="w-full h-11 rounded-xl border border-[#E5E7EB] pl-11 pr-4 outline-none"
+          />
+        </div>
+      </div>
+
+      <Dialog open={openForm} onOpenChange={setOpenForm}>
+        <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden font-sans">
+          <div className="p-6">
+            <DialogHeader className="mb-5">
+              <DialogTitle className="text-xl font-semibold">
+                {form.id ? "Update Fabric" : "Add Fabric"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
+              <input
+                placeholder="Fabric Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
+              />
+
+              <input
+                placeholder="Fabric Type"
+                value={form.family}
+                onChange={(e) => setForm({ ...form, family: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
+              />
+
+              <input
+                placeholder="Fabric SubLabel"
+                value={form.subLabel}
+                onChange={(e) => setForm({ ...form, subLabel: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
+              />
+
+              <input
+                placeholder="Pattern"
+                value={form.pattern}
+                onChange={(e) => setForm({ ...form, pattern: e.target.value })}
+                className="h-11 px-4 rounded-xl border"
+              />
+
+              <div className="md:col-span-2 space-y-3">
+                <label className="h-11 px-4 rounded-xl border flex items-center gap-3 cursor-pointer w-full">
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="text-sm truncate">
+                    {form.textureImage instanceof File
+                      ? form.textureImage.name
+                      : form.textureImage
+                        ? "Current Image"
+                        : "Upload Fabric Image"}
+                  </span>
+
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        textureImage: e.target.files?.[0] || null,
+                      })
+                    }
+                  />
+                </label>
+                <p className="text-[12px] text-gray-500 px-1 italic">
+                  * Please upload flat fabric images only; ensure there are no
+                  shadows or folds.
+                </p>
+                {form.textureImage && (
+                  <div className="md:col-span-2">
+                    <img
+                      src={
+                        form.textureImage instanceof File
+                          ? URL.createObjectURL(form.textureImage)
+                          : getImageUrl(form.textureImage as string)
+                      }
+                      alt="Preview"
+                      className="w-28 h-28 rounded-xl object-cover border"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.premium}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      premium: e.target.checked,
+                    })
+                  }
+                />
+                Premium
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.lightweight}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      lightweight: e.target.checked,
+                    })
+                  }
+                />
+                Lightweight
+              </label>
+
+              <div className="md:col-span-2 flex gap-3 pt-3">
+                <Button
+                  type="submit"
+                  className="bg-black text-white rounded-xl h-11 px-6"
+                  disabled={addMutation.isPending || updateMutation.isPending}
+                >
+                  {addMutation.isPending || updateMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : form.id ? (
+                    "Update Fabric"
+                  ) : (
+                    "Add Fabric"
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="rounded-xl h-11 px-6"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden font-sans">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1100px]">
+            <thead>
+              <tr className="border-b border-[#EAEAEA] bg-[#FAFAFA] text-left">
+                <th className="px-4 py-3 text-xs">Image</th>
+                <th className="px-4 py-3 text-xs">Name</th>
+                <th className="px-4 py-3 text-xs">Family</th>
+                <th className="px-4 py-3 text-xs">Sub Label</th>
+                <th className="px-4 py-3 text-xs">Pattern</th>
+                <th className="px-4 py-3 text-xs">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                  </td>
+                </tr>
+              ) : filteredFabrics.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-black/50">
+                    No fabrics found
+                  </td>
+                </tr>
+              ) : (
+                filteredFabrics.map((item) => {
+                  const id = item.id || item._id || "";
+
+                  return (
+                    <tr
+                      key={id}
+                      className="border-b border-[#F1F1F1] hover:bg-[#FAFAFA]"
+                    >
+                      <td className="px-4 py-3">
+                        <img
+                          src={getImageUrl(item.textureImage)}
+                          alt={item.name}
+                          className="w-12 h-12 rounded-lg object-cover border"
+                        />
+                      </td>
+
+                      <td className="px-4 py-3 text-sm">{item.name}</td>
+                      <td className="px-4 py-3 text-sm">{item.family}</td>
+                      <td className="px-4 py-3 text-sm">{item.subLabel}</td>
+                      <td className="px-4 py-3 text-sm">{item.pattern}</td>
+
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="w-9 h-9 rounded-lg border flex items-center justify-center"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(id)}
+                            className="w-9 h-9 rounded-lg border flex items-center justify-center text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <DeleteConfirmDialog
+        title="Delete Fabric?"
+        description="This action cannot be undone."
+        onConfirm={() => deleteMutation.mutate()}
+        onOpenChange={setDeleteOpen}
+        open={deleteOpen}
+      />
+    </AdminLayout>
   );
 };
 

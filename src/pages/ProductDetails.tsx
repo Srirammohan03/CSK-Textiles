@@ -17,11 +17,10 @@ import {
   Mail,
   MessageSquare,
   Loader2,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getImageUrl } from "@/api/config";
 
 const ProductDetails = () => {
   const [loading, setLoading] = useState(false);
@@ -32,7 +31,9 @@ const ProductDetails = () => {
 
   useEffect(() => {
     if (product?.image?.length) {
-      setActiveImage(Array.isArray(product.image) ? product.image[0] : product.image);
+      setActiveImage(
+        Array.isArray(product.image) ? product.image[0] : product.image,
+      );
     }
   }, [product]);
 
@@ -44,7 +45,9 @@ const ProductDetails = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-50">Retrieving Masterpiece Details</p>
+        <p className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-50">
+          Retrieving Masterpiece Details
+        </p>
       </div>
     );
   }
@@ -54,9 +57,15 @@ const ProductDetails = () => {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <AlertCircle className="w-12 h-12 text-red-500/20 mx-auto mb-6" />
-          <h2 className="text-2xl font-display mb-2">Heritage Record Not Found</h2>
-          <p className="text-sm text-muted-foreground mb-8">The requested collection piece might have been moved or archived.</p>
-          <Button onClick={() => navigate(-1)} className="rounded-full px-8">Return to Collection</Button>
+          <h2 className="text-2xl font-display mb-2">
+            Heritage Record Not Found
+          </h2>
+          <p className="text-sm text-muted-foreground mb-8">
+            The requested collection piece might have been moved or archived.
+          </p>
+          <Button onClick={() => navigate(-1)} className="rounded-full px-8">
+            Return to Collection
+          </Button>
         </div>
       </div>
     );
@@ -64,63 +73,69 @@ const ProductDetails = () => {
 
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbwwRo_8d5_VRXVQ2fXPXL3kmOisEEsvHfL4qrVXNRNDRwzP696S8g3TOkl5SJIhqUKE/exec";
-    
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (loading) return;
+
     setLoading(true);
 
     const form = e.currentTarget;
     const formValues = new FormData(form);
-    const data = {
-      name: formValues.get("name") as string,
-      phone: formValues.get("phone") as string,
-      message: formValues.get("message") as string,
-    };
 
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
-      // 1. Send to CMS Backend
-      const res = await fetch(`${API_URL}/inquiries`, {
+      // -------------------------
+      // 1. Save to Backend
+      // -------------------------
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/inquiries`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          ...data,
+          name: formValues.get("name"),
+          phone: formValues.get("phone"),
+          email: formValues.get("email"),
+          message: formValues.get("message"),
           type: "product",
           productCategory: product?.category || "general",
-          productName: product?.name
-        })
+          productName: product?.name || "",
+        }),
       });
 
-      // 2. Backup to Google Script
-      const payload = new FormData();
-      payload.append("name", data.name);
-      payload.append("phone", data.phone);
-      payload.append("message", data.message);
-      payload.append("product", product?.name || "");
-      payload.append("type", "product");
+      // -------------------------
+      // 2. Save to Google Sheets
+      // -------------------------
+      const payload = new URLSearchParams();
 
-      fetch(GOOGLE_SCRIPT_URL, {
+      payload.append("name", formValues.get("name") as string);
+      payload.append("phone", formValues.get("phone") as string);
+      payload.append("email", formValues.get("email") as string);
+      payload.append("message", formValues.get("message") as string);
+      payload.append("type", "product");
+      payload.append("product", product?.name || "");
+      payload.append("productCategory", product?.category || "general");
+
+      await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         body: payload,
-      }).catch(console.error);
+        mode: "no-cors",
+      });
 
-      if (res.ok) {
-        toast.success("Enquiry sent successfully");
-        form.reset();
-      } else {
-        throw new Error("Backend failed");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Submission failed. Try again.");
+      toast.success("Enquiry sent successfully");
+
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      toast.error("Submission failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const productImages = Array.isArray(product.image) ? product.image : [product.image];
+  const productImages = Array.isArray(product.image)
+    ? product.image
+    : [product.image];
 
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden font-body">
@@ -128,7 +143,7 @@ const ProductDetails = () => {
 
       <main className="flex-grow">
         {/* Product Hero Banner */}
-        <section className="relative h-[40vh] overflow-hidden bg-black">
+        <section className="relative h-[60vh] overflow-hidden bg-black">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.6 }}
@@ -136,7 +151,7 @@ const ProductDetails = () => {
             className="absolute inset-0"
           >
             <img
-              src={getImageUrl(activeImage)}
+              src={activeImage}
               alt={product.name}
               className="w-full h-full object-cover blur-sm scale-110"
             />
@@ -195,7 +210,7 @@ const ProductDetails = () => {
                   />
                 </AnimatePresence>
               </div>
-              
+
               {productImages.length > 1 && (
                 <div className="grid grid-cols-5 gap-4 px-2">
                   {productImages.map((img, i) => (
@@ -210,7 +225,7 @@ const ProductDetails = () => {
                       )}
                     >
                       <img
-                        src={getImageUrl(img)}
+                        src={img}
                         alt=""
                         className="w-full h-full object-cover rounded-xl"
                       />
@@ -283,8 +298,8 @@ const ProductDetails = () => {
                               : color.toLowerCase().includes("charcoal")
                                 ? "#36454F"
                                 : color.toLowerCase().includes("gold")
-                                ? "#D4AF37"
-                                : "#f0f0f0",
+                                  ? "#D4AF37"
+                                  : "#f0f0f0",
                         }}
                       />
                     ))}
@@ -297,7 +312,9 @@ const ProductDetails = () => {
                   <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-3 font-bold">
                     Operational Lead Time
                   </p>
-                  <p className="font-bold text-slate-700">10-14 Business Days</p>
+                  <p className="font-bold text-slate-700">
+                    10-14 Business Days
+                  </p>
                 </div>
                 <div className="col-span-2 pt-4">
                   <Button
@@ -310,7 +327,7 @@ const ProductDetails = () => {
                           ? "Suit"
                           : product.category === "shirting"
                             ? "Shirt"
-                            : "Wedding outfit";
+                            : "Wedding_outfit";
                       navigate("/customize", { state: { outfit: outfitType } });
                     }}
                     className="w-full h-14 rounded-2xl border-primary text-primary hover:bg-primary hover:text-white font-bold uppercase tracking-[0.1em] text-[11px] shadow-sm transition-all hover:shadow-lg"
@@ -340,7 +357,9 @@ const ProductDetails = () => {
                     <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-slate-800">
                       Bespoke Inquiry
                     </h3>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-1">Consultation Request</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-1">
+                      Consultation Request
+                    </p>
                   </div>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -370,8 +389,25 @@ const ProductDetails = () => {
                       <Input
                         id="phone"
                         name="phone"
-                        type="tel"
+                        type="number"
                         placeholder="Mobile Number"
+                        required
+                        maxLength={10}
+                        className="bg-white border-slate-100 h-12 rounded-xl focus:ring-primary/5 focus:border-primary transition-all font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2.5">
+                      <Label
+                        htmlFor="phone"
+                        className="text-[10px] uppercase tracking-widest font-black text-slate-400 ml-1"
+                      >
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="email"
                         required
                         className="bg-white border-slate-100 h-12 rounded-xl focus:ring-primary/5 focus:border-primary transition-all font-medium"
                       />
