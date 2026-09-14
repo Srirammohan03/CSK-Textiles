@@ -1,19 +1,32 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/hooks/useProducts";
-import { ChevronRight, Filter, ShoppingBag, Loader2 } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  Filter,
+  ShoppingBag,
+  Loader2,
+} from "lucide-react";
 import { ProductCard } from "@/components/ui/product-card";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import { FilterDropdown } from "@/components/FilterDropdown";
+import { cn } from "@/lib/utils";
 import RtwBanner from "/images/rtw2.png";
+
+const PRODUCTS_PER_PAGE = 16;
 
 const CollectionReadyToWear = () => {
   const { data: products = [], isLoading } = useProducts("ready-to-wear");
+
   const [activeFilter, setActiveFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const productsSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,9 +49,11 @@ const CollectionReadyToWear = () => {
         filterMap[activeFilter] || activeFilter.toLowerCase();
 
       const categoryMatch = p.category?.toLowerCase().includes(targetCategory);
+
       const fabricMatch = p.fabric
         ?.toLowerCase()
         .includes(activeFilter.toLowerCase());
+
       const tagMatch = p.tags?.some((tag) =>
         tag.toLowerCase().includes(activeFilter.toLowerCase()),
       );
@@ -47,14 +62,90 @@ const CollectionReadyToWear = () => {
     });
   }, [activeFilter, products]);
 
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return;
+    }
+
+    setCurrentPage(page);
+
+    requestAnimationFrame(() => {
+      productsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+  const paginationItems = useMemo(() => {
+    const items: Array<number | "ellipsis-left" | "ellipsis-right"> = [];
+
+    if (totalPages <= 7) {
+      for (let page = 1; page <= totalPages; page++) {
+        items.push(page);
+      }
+
+      return items;
+    }
+
+    items.push(1);
+
+    if (currentPage > 4) {
+      items.push("ellipsis-left");
+    }
+
+    const startPage = Math.max(2, currentPage - 1);
+
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(page);
+    }
+
+    if (currentPage < totalPages - 3) {
+      items.push("ellipsis-right");
+    }
+
+    items.push(totalPages);
+
+    return items;
+  }, [currentPage, totalPages]);
+
   const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050505] text-white font-body overflow-x-hidden">
       <AnnouncementBar />
+
       <Header />
 
       <main className="flex-grow">
@@ -62,7 +153,10 @@ const CollectionReadyToWear = () => {
           <motion.div
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            transition={{
+              duration: 1.5,
+              ease: "easeOut",
+            }}
             className="absolute inset-0"
           >
             <img
@@ -70,20 +164,33 @@ const CollectionReadyToWear = () => {
               alt="Premium Ready-to-Wear Collection"
               className="w-full h-full object-cover"
             />
+
             <div className="absolute inset-0 bg-black/40" />
           </motion.div>
+
           <div className="relative h-full container mx-auto px-4 flex flex-col justify-center items-center text-center">
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
+              initial={{
+                y: 30,
+                opacity: 0,
+              }}
+              animate={{
+                y: 0,
+                opacity: 1,
+              }}
+              transition={{
+                delay: 0.5,
+                duration: 0.8,
+              }}
             >
               <span className="inline-block px-4 py-1 border border-white/20 rounded-full text-[10px] font-bold tracking-[0.3em] uppercase backdrop-blur-md">
                 Effortless Elegance
               </span>
+
               <h1 className="text-2xl md:text-6xl font-display font-medium my-4 tracking-tight">
                 Ready <span className="italic font-light">To Wear</span>
               </h1>
+
               <p className="max-w-xl mx-auto text-lg text-white/60 font-light leading-relaxed">
                 Premium craftsmanship, ready for your next occasion. Impeccable
                 fit met with uncompromising style.
@@ -99,6 +206,7 @@ const CollectionReadyToWear = () => {
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-accent mb-1">
                   Instant Sophistication
                 </p>
+
                 <p className="text-white/40 text-xs font-light tracking-wide">
                   Pre-finished masterpiece selections
                 </p>
@@ -109,6 +217,7 @@ const CollectionReadyToWear = () => {
                   <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
                     <Filter className="w-4 h-4 text-white/70" />
                   </div>
+
                   <span className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold hidden sm:block">
                     Browse Types
                   </span>
@@ -125,49 +234,156 @@ const CollectionReadyToWear = () => {
             </div>
           </div>
         </section>
-
-        <section className="py-24 bg-white relative">
+        <section
+          ref={productsSectionRef}
+          className="py-24 bg-white relative scroll-mt-10"
+        >
           <div className="container mx-auto px-4">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-40 space-y-4">
                 <Loader2 className="w-10 h-10 text-black/20 animate-spin" />
+
                 <p className="text-[10px] uppercase tracking-[0.3em] text-black/40 font-bold">
                   Assembling Modern Classics
                 </p>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                key={activeFilter}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12"
-              >
-                <AnimatePresence mode="popLayout">
-                  {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      id={String(product.id)}
-                      name={product.name}
-                      description={product.description}
-                      image={
-                        Array.isArray(product.image)
-                          ? product.image[0]
-                          : product.image
-                      }
-                      fabric={product.fabric}
-                      isNew={product.isNewArrival}
-                      tags={product.tags}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-12">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-black/40 font-bold">
+                      Ready-to-Wear Collection
+                    </p>
+
+                    <h2 className="text-2xl md:text-3xl font-display font-medium text-black mt-2">
+                      {activeFilter === "All" ? "All Pieces" : activeFilter}
+                    </h2>
+                  </div>
+
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-black/40 font-bold">
+                    Showing{" "}
+                    <span className="text-black">
+                      {Math.min(
+                        (currentPage - 1) * PRODUCTS_PER_PAGE + 1,
+                        filteredProducts.length,
+                      )}
+                      -
+                      {Math.min(
+                        currentPage * PRODUCTS_PER_PAGE,
+                        filteredProducts.length,
+                      )}
+                    </span>{" "}
+                    of{" "}
+                    <span className="text-black">
+                      {filteredProducts.length}
+                    </span>
+                  </div>
+                </div>
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  key={`${activeFilter}-${currentPage}`}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12"
+                >
+                  <AnimatePresence mode="popLayout">
+                    {paginatedProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={String(product.id)}
+                        name={product.name}
+                        description={product.description}
+                        image={
+                          Array.isArray(product.image)
+                            ? product.image[0]
+                            : product.image
+                        }
+                        fabric={product.fabric}
+                        isNew={product.isNewArrival}
+                        tags={product.tags}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+                {totalPages > 1 && (
+                  <div className="mt-20 flex flex-col items-center gap-6">
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-black/40 font-bold">
+                      Page <span className="text-black">{currentPage}</span> of{" "}
+                      <span className="text-black">{totalPages}</span>
+                    </p>
+
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className="h-11 w-11 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
+                        aria-label="Previous page"
+                      >
+                        <ChevronRight className="w-4 h-4 rotate-180" />
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        {paginationItems.map((item, index) => {
+                          if (
+                            item === "ellipsis-left" ||
+                            item === "ellipsis-right"
+                          ) {
+                            return (
+                              <span
+                                key={`${item}-${index}`}
+                                className="w-8 text-center text-black/30 text-sm"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          const isActive = currentPage === item;
+
+                          return (
+                            <Button
+                              key={item}
+                              type="button"
+                              variant="ghost"
+                              onClick={() => handlePageChange(item)}
+                              className={cn(
+                                "h-11 w-11 rounded-full text-xs font-bold transition-all duration-300",
+                                isActive
+                                  ? "bg-black text-white hover:bg-black hover:text-white shadow-lg"
+                                  : "text-black/50 hover:bg-black/5 hover:text-black",
+                              )}
+                              aria-label={`Go to page ${item}`}
+                              aria-current={isActive ? "page" : undefined}
+                            >
+                              {item}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className="h-11 w-11 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
+                        aria-label="Next page"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-40">
                 <ShoppingBag className="w-16 h-16 text-black/5 mx-auto mb-6" />
+
                 <h3 className="text-3xl font-display font-medium mb-2 uppercase tracking-tight text-black/80">
                   Stock Refreshing
                 </h3>
+
                 <p className="text-black/40 font-light">
                   Our ready-to-wear artisans are replenishing the store.
                 </p>
