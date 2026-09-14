@@ -306,24 +306,54 @@ const CollectionReadyToWear = () => {
                   </AnimatePresence>
                 </motion.div>
                 {totalPages > 1 && (
-                  <div className="mt-20 flex flex-col items-center gap-6">
+                  <div className="mt-16 md:mt-20 flex flex-col items-center gap-5 md:gap-6">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-black/40 font-bold">
                       Page <span className="text-black">{currentPage}</span> of{" "}
                       <span className="text-black">{totalPages}</span>
                     </p>
-
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex sm:hidden items-center justify-center gap-3 w-full">
                       <Button
                         type="button"
                         variant="outline"
                         disabled={currentPage === 1}
                         onClick={() => handlePageChange(currentPage - 1)}
-                        className="h-11 w-11 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
+                        className="h-11 w-11 shrink-0 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
                         aria-label="Previous page"
                       >
-                        <ChevronRight className="w-4 h-4 rotate-180" />
+                        <ChevronLeft className="w-4 h-4" />
                       </Button>
-                      <div className="flex items-center gap-2">
+
+                      <div
+                        className="h-11 min-w-11 px-4 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold shadow-lg"
+                        aria-current="page"
+                      >
+                        {currentPage}
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className="h-11 w-11 shrink-0 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
+                        aria-label="Next page"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="hidden sm:flex items-center justify-center gap-2 max-w-full">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className="h-11 w-11 shrink-0 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
+                        aria-label="Previous page"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+
+                      <div className="flex items-center gap-1 sm:gap-2">
                         {paginationItems.map((item, index) => {
                           if (
                             item === "ellipsis-left" ||
@@ -332,7 +362,7 @@ const CollectionReadyToWear = () => {
                             return (
                               <span
                                 key={`${item}-${index}`}
-                                className="w-8 text-center text-black/30 text-sm"
+                                className="w-7 sm:w-8 text-center text-black/30 text-sm"
                               >
                                 ...
                               </span>
@@ -348,7 +378,7 @@ const CollectionReadyToWear = () => {
                               variant="ghost"
                               onClick={() => handlePageChange(item)}
                               className={cn(
-                                "h-11 w-11 rounded-full text-xs font-bold transition-all duration-300",
+                                "h-11 w-11 shrink-0 rounded-full text-xs font-bold transition-all duration-300",
                                 isActive
                                   ? "bg-black text-white hover:bg-black hover:text-white shadow-lg"
                                   : "text-black/50 hover:bg-black/5 hover:text-black",
@@ -367,7 +397,7 @@ const CollectionReadyToWear = () => {
                         variant="outline"
                         disabled={currentPage === totalPages}
                         onClick={() => handlePageChange(currentPage + 1)}
-                        className="h-11 w-11 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
+                        className="h-11 w-11 shrink-0 rounded-full border-black/10 text-black hover:bg-black hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-all"
                         aria-label="Next page"
                       >
                         <ChevronRight className="w-4 h-4" />
